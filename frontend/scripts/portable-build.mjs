@@ -33,9 +33,9 @@ const bundle = await rollup({
     {
       name: "production-env",
       transform(code) {
-        return code.includes("process.env.NODE_ENV")
+        return code.includes("process.env.")
           ? {
-              code: code.replaceAll("process.env.NODE_ENV", '"production"'),
+              code: code.replaceAll("process.env.NODE_ENV", '"production"').replaceAll("process.env.REACT_APP_BACKEND_URL", '""'),
               map: null,
             }
           : null;
