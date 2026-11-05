@@ -67,7 +67,7 @@ export function InstancedModel({
   shadows?: boolean;
 }) {
   const { scene } = useGLTF(url);
-  const { scene: original } = useGLTF(url.replace("-lod", ""));
+  const original = scene;
   const shared = useMemo(() => {
     const materials = new Map<string, T.Material>();
     original.traverse((o) => {
