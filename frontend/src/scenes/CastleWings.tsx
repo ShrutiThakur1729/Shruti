@@ -29,7 +29,6 @@ export function Gallery() {
       {[-4.5, 4.5].map((x) => (
         <Banner key={x} position={[x, 6.4, -21.4]} label="S" bg="#3a3148" />
       ))}
-      <ExitDoor title="Back to the Great Hall" />
       <DustMotes count={40} area={[22, 8, 26]} center={[0, 5, -6]} color="#f5deb0" size={0.03} />
     </group>
   );
@@ -355,7 +354,6 @@ export function Library() {
       ))}
       <Globe position={[12, 0, -19.6]} />
       <Ladder position={[-12.2, 0, -18.6]} />
-      <ExitDoor title="Back to the Great Hall" />
       <Banner position={[-6, 6.4, -21.4]} label="A" bg="#2e4a3a" />
       <Banner position={[6, 6.4, -21.4]} label="S" bg="#2e4a3a" />
       <DustMotes count={36} area={[22, 7, 26]} center={[0, 4.5, -6]} color="#f5deb0" size={0.028} />
@@ -415,6 +413,7 @@ function FeaturedBook({ book, index }: { book: (typeof books)[number]; index: nu
   const open = useStore((s) => s.openPanel);
   const nearby = useStore((s) => s.nearby);
   const ref = useRef<T.Group>(null);
+  const selected=useStore(s=>s.panel==='book'&&s.refId===book.id&&!s.bookReader);
   useFrame(({ clock }) => {
     if (ref.current)
       ref.current.position.z =
@@ -423,6 +422,7 @@ function FeaturedBook({ book, index }: { book: (typeof books)[number]; index: nu
   return (
     <group
       ref={ref}
+      visible={!selected}
       position={[pos[0], 1.5, pos[1]]}
       onClick={(e) => {
         e.stopPropagation();
@@ -506,6 +506,7 @@ export function BookExperience({ bookId }: { bookId: string }) {
   const intro = useRef(0);
   const shelfPos = useMemo(() => interactionPoint(`book-${bookId}`), [bookId]);
   const closePanel = useStore((s) => s.closePanel);
+  const closing=useStore(s=>s.bookClosing);
 
   useEffect(() => {
     audio.playSfx("bookOpen");
@@ -527,7 +528,10 @@ export function BookExperience({ bookId }: { bookId: string }) {
 
   useFrame((_, dt) => {
     // intro: fly from the shelf into reading position
-    if (intro.current < 1) intro.current = Math.min(1, intro.current + dt / 1.2);
+    if (closing) {
+      intro.current=Math.max(0,intro.current-dt/0.8);
+      if(intro.current===0){useStore.setState({panel:null,refId:null,bookClosing:false});return;}
+    } else if (intro.current < 1) intro.current = Math.min(1, intro.current + dt / 1.2);
     const e = intro.current * intro.current * (3 - 2 * intro.current);
     const forward = new T.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
     const anchor = camera.position

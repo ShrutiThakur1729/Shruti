@@ -5,6 +5,7 @@ import { blockGeometry, useSurface, Stones, Banner } from "./shared/Props";
 import { plaqueTexture, stainedGlassTexture, bannerTexture } from "./shared/textures";
 import { useStore, type Zone } from "../state/store";
 import { Gallery, Library } from "./CastleWings";
+import { WING_ORIGIN } from '../systems/castleLayout';
 
 export default function CastleInterior({ zone }: { zone: Zone }) {
   const quality = useStore((s) => s.quality);
@@ -20,8 +21,11 @@ export default function CastleInterior({ zone }: { zone: Zone }) {
           <pointLight position={[0, 9.5, 9]} intensity={30} distance={28} decay={2} color="#ffbf74" />
         </>
       )}
-      {zone === "hall" ? <Hall /> : zone === "gallery" ? <Gallery /> : <Library />}
-      <CommonRoomShell zone={zone} />
+      <Hall />
+      <CommonRoomShell zone="hall" />
+      <group position={[...WING_ORIGIN.gallery]}><Gallery /><CommonRoomShell zone="gallery" /></group>
+      <group position={[...WING_ORIGIN.library]}><Library /><CommonRoomShell zone="library" /></group>
+      <LandingCorridors />
     </>
   );
 }
@@ -29,9 +33,10 @@ export default function CastleInterior({ zone }: { zone: Zone }) {
 /* shared floor / walls used by all three rooms */
 function CommonRoomShell({ zone }: { zone: Zone }) {
   const stone = useSurface("cobblestone_floor_08", 9);
-  const size = zone === "hall" ? { w: 30, d: 60 } : { w: 28, d: 32 };
+  const size = zone === "hall" ? { w: 30, d: 66 } : { w: 28, d: 32 };
+  const centerZ=zone==='hall'?-3:-6;
   return (
-    <group>
+    <group position={[0,0,centerZ]}>
       <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[size.w, size.d]} />
         <primitive object={stone} attach="material" />
@@ -44,14 +49,12 @@ function CommonRoomShell({ zone }: { zone: Zone }) {
         <boxGeometry args={[size.w + 2, 14, 1]} />
         <meshStandardMaterial color="#2b241d" roughness={1} />
       </mesh>
-      <mesh position={[-size.w / 2 - 0.5, 7, 0]} receiveShadow>
-        <boxGeometry args={[1, 14, size.d]} />
-        <meshStandardMaterial color="#2b241d" roughness={1} />
-      </mesh>
-      <mesh position={[size.w / 2 + 0.5, 7, 0]} receiveShadow>
-        <boxGeometry args={[1, 14, size.d]} />
-        <meshStandardMaterial color="#2b241d" roughness={1} />
-      </mesh>
+      {[-1,1].map(side=>{
+        const passage=zone==='hall'||(zone==='gallery'?side===1:side===-1);
+        const gap=zone==='hall'?-29.5:-3.5;
+        const segments=passage?[[-size.d/2,gap-2.5],[gap+2.5,size.d/2]]:[[-size.d/2,size.d/2]];
+        return segments.filter(([a,b])=>b>a).map(([a,b],i)=><mesh key={`${side}-${i}`} position={[side*(size.w/2+.5),7,(a+b)/2]}><boxGeometry args={[1,14,b-a]}/><meshStandardMaterial color="#2b241d" roughness={1}/></mesh>);
+      })}
       <mesh position={[0, 13.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[size.w, size.d]} />
         <meshStandardMaterial color="#241c15" roughness={1} />
@@ -74,8 +77,8 @@ function Hall() {
     const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
     for (let i = 0; i < 13; i++)
       list.push({
-        p: new T.Vector3(0, 0.25 + i * 0.46, -18.9 - i * 0.92),
-        s: new T.Vector3(9, 0.5, 0.95),
+        p: new T.Vector3(0, .2+(i+1)*6.25/13-.25, -18-(i+.5)*12/13),
+        s: new T.Vector3(9, 0.5, 12/13+.02),
         r: 0,
       });
     return list;
@@ -149,19 +152,17 @@ function Hall() {
         </mesh>
       ))}
       {/* balcony */}
-      <mesh position={[0, 6.2, -28.2]} castShadow receiveShadow>
-        <boxGeometry args={[28, 0.5, 4.4]} />
+      <mesh position={[0, 6.2, -32.5]} castShadow receiveShadow>
+        <boxGeometry args={[30, 0.5, 5]} />
         <meshStandardMaterial color="#4a3a2a" roughness={0.9} />
       </mesh>
-      {Array.from({ length: 13 }, (_, i) => (
-        <mesh key={i} position={[-12 + i * 2, 7.1, -26.2]}>
+      {Array.from({ length: 13 }, (_, i) => -12+i*2).filter(x=>Math.abs(x)>4.5).map((x) => (
+        <mesh key={x} position={[x, 7.1, -30]}>
           <boxGeometry args={[0.22, 1.6, 0.22]} />
           <meshStandardMaterial color="#3a2e22" roughness={0.9} />
         </mesh>
       ))}
       {/* wing doors */}
-      <WingDoor x={-14.4} ry={Math.PI / 2} title="Gallery of Creations" />
-      <WingDoor x={14.4} ry={-Math.PI / 2} title="The Living Archives" />
       {/* exit doors */}
       <group position={[0, 0, 29.4]}>
         <mesh position={[0, 3.4, 0.2]} castShadow>
@@ -257,3 +258,14 @@ function WingDoor({ x, ry, title }: { x: number; ry: number; title: string }) {
 
 // end of CastleInterior
 
+function LandingCorridors(){
+ const west=useMemo(()=>plaqueTexture('West Wing','Gallery of Creations','Walk through the arch'),[]);
+ const east=useMemo(()=>plaqueTexture('East Wing','The Living Archives','Walk through the arch'),[]);
+ return <group>{[-1,1].map(side=><group key={side}>
+  <mesh position={[side*20,6.2,-32.5]} receiveShadow><boxGeometry args={[12,.5,5]}/><meshStandardMaterial color="#65523a" roughness={.9}/></mesh>
+  {[-35,-30].map(z=><mesh key={z} position={[side*20,7.05,z]}><boxGeometry args={[12,1.2,.25]}/><meshStandardMaterial color="#4c3928" roughness={.85}/></mesh>)}
+  <mesh position={[side*14.5,10.8,-32.5]} rotation={[0,side===-1?Math.PI/2:-Math.PI/2,0]}><planeGeometry args={[4.5,1.8]}/><meshStandardMaterial map={side<0?west:east} emissive="#94713c" emissiveIntensity={.3}/></mesh>
+  <mesh position={[side*15,9.3,-32.5]} rotation={[0,Math.PI/2,0]}><torusGeometry args={[2.6,.2,6,24,Math.PI]}/><meshStandardMaterial color="#a58c60" roughness={.8}/></mesh>
+  <pointLight position={[side*20,9,-32.5]} intensity={16} distance={17} color="#ffcd83"/>
+ </group>)}</group>;
+}

@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { interiorFloor, interiorWalkable } from '../systems/castleLayout';
 
 /* ————— shared noise ————— */
 export function noise(x: number, z: number) {
@@ -245,14 +246,14 @@ import type { Zone } from "../state/store";
 
 export function getGround(world: WorldId, zone: Zone | null, x: number, z: number) {
   if (world === "hello") return walkHeight(x, z);
-  if (world === "castle") return zone ? interiorHeight(zone) : castleWalkHeight(x, z);
+  if (world === "castle") return zone ? interiorFloor(x,z) : castleWalkHeight(x, z);
   return gardenWalkHeight(x, z);
 }
 
 export function canStand(world: WorldId, zone: Zone | null, x: number, z: number) {
   if (world === "hello") return canWalk(x, z);
   if (world === "castle")
-    return zone ? interiorCanStand(zone, x, z) : castleCanStand(x, z);
+    return zone ? interiorWalkable(x,z) : castleCanStand(x, z);
   return gardenCanStand(x, z);
 }
 
