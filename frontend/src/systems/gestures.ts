@@ -43,19 +43,31 @@ function select() {
   return "Nothing nearby";
 }
 
-export async function startGestures(video: HTMLVideoElement, onFrame: (f: GestureFrame) => void) {
+export async function startGestures(
+  video: HTMLVideoElement,
+  onFrame: (f: GestureFrame) => void,
+  onCameraReady: () => void
+) {
   const stream = await navigator.mediaDevices.getUserMedia({
     video: { width: 320, height: 240, facingMode: "user" },
     audio: false,
   });
-  video.srcObject = stream;
-  await video.play();
-  const vision = await FilesetResolver.forVisionTasks(WASM);
-  const hands = await HandLandmarker.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: MODEL, delegate: "GPU" },
-    runningMode: "VIDEO",
-    numHands: 1,
-  });
+  let hands: HandLandmarker;
+  try {
+    video.srcObject = stream;
+    await video.play();
+    onCameraReady();
+    const vision = await FilesetResolver.forVisionTasks(WASM);
+    hands = await HandLandmarker.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: MODEL, delegate: "GPU" },
+      runningMode: "VIDEO",
+      numHands: 1,
+    });
+  } catch (err) {
+    stream.getTracks().forEach((t) => t.stop());
+    video.srcObject = null;
+    throw err;
+  }
 
   let raf = 0;
   let lastVideoTime = -1;

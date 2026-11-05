@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import logging
 import re
 import uuid
@@ -115,18 +116,19 @@ async def submit_contact(payload: ContactIn):
 BLOCKED_WORDS = {
     'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'bastard', 'dick', 'pussy',
     'slut', 'whore', 'nigger', 'nigga', 'faggot', 'retard', 'motherfucker',
-    'bullshit', 'wanker', 'prick', 'twat', 'cock', 'rape', 'porn', 'sex',
+    'bulshit', 'wanker', 'prick', 'twat', 'cock', 'rape', 'porn', 'sex',
+    'fck', 'fuk', 'fk', 'sht', 'btch', 'azhole', 'ashole', 'cnt', 'stfu', 'wtf',
 }
 
 
 def has_blocked_word(text: str) -> bool:
-    squashed = re.sub(r'[^a-z\s]', '', text.lower().replace('@', 'a').replace('$', 's')
-                      .replace('0', 'o').replace('1', 'i').replace('3', 'e'))
+    t = text.lower().translate(str.maketrans('@4$501!3|', 'aassoiiei'))
+    squashed = re.sub(r'(.)\1+', r'\1', re.sub(r'[^a-z\s]', '', t))
     words = set(squashed.split())
     return any(w in BLOCKED_WORDS or any(w.startswith(b) for b in PREFIX_BLOCKED) for w in words)
 
 
-PREFIX_BLOCKED = {'fuck', 'shit', 'bitch', 'cunt', 'asshole', 'motherfuck', 'nigg', 'fagg', 'whore', 'slut', 'porn'}
+PREFIX_BLOCKED = {'fuck', 'fuk', 'fck', 'shit', 'bitch', 'cunt', 'ashole', 'motherfuck', 'motherfuk', 'nigg', 'fagg', 'whore', 'slut', 'porn'}
 
 
 class GuestNote(BaseDocument):
@@ -145,7 +147,7 @@ class GuestNoteIn(BaseModel):
 
 
 def require_admin(key: Optional[str]):
-    if not key or key != os.environ['GUESTBOOK_ADMIN_KEY']:
+    if not key or not hmac.compare_digest(key.encode(), os.environ['GUESTBOOK_ADMIN_KEY'].encode()):
         raise HTTPException(status_code=401, detail='Wrong moderation key.')
 
 

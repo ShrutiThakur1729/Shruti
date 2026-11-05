@@ -42,16 +42,16 @@ function glowTexture(note: Note) {
   return tex;
 }
 
-function FloatingNote({ note, index, total }: { note: Note; index: number; total: number }) {
+function FloatingNote({ note, index }: { note: Note; index: number }) {
   const ref = useRef<T.Sprite>(null);
   const fade = useRef(0);
   const tex = useMemo(() => glowTexture(note), [note]);
   useEffect(() => () => tex.dispose(), [tex]);
-  const a = (index / Math.max(total, 1)) * Math.PI * 2 + 0.4;
-  const r = 10 + (index % 3) * 3;
+  const a = index * 2.39996 + 0.4;
+  const r = 9 + ((index * 7) % 5) * 1.8;
   const x = GARDEN.cx + Math.cos(a) * r;
   const z = GARDEN.cz + Math.sin(a) * r;
-  const base = gardenGround(x, z) + 4.2 + (index % 3) * 1.1;
+  const base = gardenGround(x, z) + 4 + ((index * 3) % 4) * 1.6;
   useFrame(({ clock }, delta) => {
     const s = ref.current;
     if (!s) return;
@@ -107,7 +107,7 @@ export default function GuestbookNotes() {
     <group>
       <GuestbookStand />
       {notes.map((n, i) => (
-        <FloatingNote key={n.id} note={n} index={i} total={notes.length} />
+        <FloatingNote key={n.id} note={n} index={i} />
       ))}
     </group>
   );

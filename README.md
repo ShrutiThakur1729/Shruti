@@ -46,6 +46,11 @@ at your backend (full details in `CODEX_ENV_SETUP.md`).
   altitude during flights · E interact · M atlas · Esc release/close.
 - **Mobile:** touch joystick, drag to look, ✦ interact button, 2D book reader.
 
+## New: Guestbook & hand gestures
+
+- **Guestbook Wall** (Memory Garden, by the gate): visitors leave a note (name ≤40, note 3–140 chars, no links, bad words filtered). Notes stay pending until approved at `/moderate` with `GUESTBOOK_ADMIN_KEY`; approved notes float as glowing text above the garden.
+- **Hand gestures** (“Use hand gestures” button): move hand to look, quick pinch to select/close, hold pinch to walk, swipe left/right to switch world. Runs fully in the browser (MediaPipe).
+
 ## Structure
 
 ```

@@ -56,6 +56,7 @@ Do not weaken those rules.
 | `CORS_ORIGINS` | Backend | CORS allow-list (`*` in the working environment). | Public | Required |
 | `GITHUB_TOKEN` | Owner/tooling only | GitHub personal access token used to push this repository. The app itself never reads it. | **Confidential** | Optional |
 | `EMERGENT_LLM_KEY` | Backend (`server.py` → `emergentintegrations`) | Universal LLM key used by `POST /api/narrate` to generate the female AI narrator voice (OpenAI `tts-1`, voice `fable`, cached to `backend/narration_cache/`). If missing, `/api/voice-status` reports `{available:false}` and the frontend gracefully falls back to text-only captions. | **Confidential** | Optional (required only for spoken narration) |
+| `GUESTBOOK_ADMIN_KEY` | Backend (`server.py`) | Secret key for the guestbook moderation page (`/moderate`) and the `X-Admin-Key` header on `GET /api/guestbook/moderation`, `POST /api/guestbook/{id}/approve`, `DELETE /api/guestbook/{id}`. | **Confidential** | Required for guestbook moderation |
 
 Frontend equivalent references: `.env.example` files exist at `frontend/.env.example`
 (and document all names above).
@@ -106,6 +107,7 @@ env vars — never in the browser bundle.
 |---|---|---|
 | MongoDB | Running locally in Emergent (`mongod` via supervisor). For production use MongoDB Atlas or any hosted Mongo; set `MONGO_URL`. | Required for the contact form |
 | AI narrator (TTS) | Working via the encrypted `EMERGENT_LLM_KEY` (OpenAI `tts-1`, voice `fable`). | Optional; text-only fallback is automatic. Audio is cached in `backend/narration_cache/` (gitignored). |
+| Hand gestures | MediaPipe Hand Landmarker runs in the browser; wasm from cdn.jsdelivr.net, model from storage.googleapis.com. No key. | Camera turns on only after the visitor clicks “Use hand gestures”. |
 | Music & ambience | Fully self-contained: original procedural WebAudio synthesis + the owner's theme file. | `frontend/public/audio/website-theme.m4a` is **copyrighted** and gitignored — drop the owner's copy in for local preview only. Public builds use the procedural themes. |
 | Magic Shop (BTS) | Official Spotify embed (`open.spotify.com`), no keys needed. | Nothing to configure |
 

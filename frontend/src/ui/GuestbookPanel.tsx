@@ -56,7 +56,7 @@ export default function GuestbookPanel() {
             value={name}
             maxLength={40}
             required
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); if (state === "error") setState("idle"); }}
           />
         </label>
         <label>
@@ -68,7 +68,7 @@ export default function GuestbookPanel() {
             minLength={3}
             rows={3}
             required
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => { setMessage(e.target.value); if (state === "error") setState("idle"); }}
           />
           <small className="gb-count" data-testid="guestbook-count">{message.length}/140</small>
         </label>

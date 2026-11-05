@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import type { GestureFrame } from "../systems/gestures";
 
-type Status = "loading" | "on" | "error";
+type Status = "loading" | "model" | "on" | "error";
 
 export default function GestureControl() {
   const video = useRef<HTMLVideoElement>(null);
@@ -23,7 +23,7 @@ export default function GestureControl() {
             window.clearTimeout(toastTimer.current);
             toastTimer.current = window.setTimeout(() => setToast(""), 1400);
           }
-        })
+        }, () => !cancelled && setStatus("model"))
       )
       .then((s) => {
         if (cancelled) s();
@@ -33,7 +33,7 @@ export default function GestureControl() {
         }
       })
       .catch(() => !cancelled && setStatus("error"));
-    const timeout = window.setTimeout(() => !stop && !cancelled && setStatus((s) => (s === "loading" ? "error" : s)), 20000);
+    const timeout = window.setTimeout(() => !cancelled && setStatus((s) => (s === "loading" ? "error" : s)), 20000);
     return () => {
       cancelled = true;
       window.clearTimeout(timeout);
@@ -46,7 +46,9 @@ export default function GestureControl() {
   const label =
     status === "loading"
       ? "Waking the camera…"
-      : status === "error"
+      : status === "model"
+        ? "Loading hand tracking…"
+        : status === "error"
         ? "Camera unavailable — allow camera access and try again."
         : !frame?.hand
           ? "Show your hand to the camera"
