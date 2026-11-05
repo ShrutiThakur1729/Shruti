@@ -1,0 +1,69 @@
+.open-door.od-immersive {
+  --od-gold: #c8a251;
+  display: grid;
+  grid-template-rows: auto minmax(min-content, 1fr) auto;
+  isolation: isolate;
+  overflow: auto;
+  overflow-x: hidden;
+  background: #071d12;
+  color: #fff2c8;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+}
+.od-immersive .od-backdrop {position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,transparent 35%,#061a0c99 80%),url('/assets/open-door-scenery.png') left center / auto 100% no-repeat;pointer-events:none}
+.od-immersive .od-backdrop::before {content:'';position:absolute;inset:0;z-index:-1;background:url('/assets/open-door-scenery.png') center / cover;filter:blur(9px) brightness(.5)}
+.od-immersive .od-header {padding:12px 2.5%;min-height:74px;background:#03190ff2;border-bottom:1px solid var(--od-gold);gap:20px}
+.od-immersive .od-brand {font-size:clamp(.85rem,1.35vw,1.3rem);letter-spacing:3px;gap:22px}
+.od-immersive .od-brand em {font-size:1.1rem;margin-top:3px;letter-spacing:0}
+.od-immersive .od-header button {font-size:1.15rem;padding:8px 0;color:#e8c66d}
+.od-immersive .od-composition {display:flex;justify-content:flex-end;align-items:center;min-height:0;height:auto;padding:26px 2.5%;gap:0}
+.od-immersive .od-contact-panel {position:relative;box-sizing:border-box;width:53%;max-width:850px;min-width:0;padding:24px 28px 26px;text-align:center;background:linear-gradient(130deg,#23300bdb,#071c13e8 58%,#15230bdc);backdrop-filter:blur(9px);border:1px solid var(--od-gold);border-radius:24px;box-shadow:0 12px 40px #0007;color:#fff2c8;overflow:visible}
+.od-immersive .od-contact-panel::before,.od-immersive .od-contact-panel::after {content:'❧';position:absolute;top:5px;left:15px;color:#c29a44;font-size:32px}
+.od-immersive .od-contact-panel::after {left:auto;right:15px;transform:scaleX(-1)}
+.od-immersive .chapter-mark {color:#f1dfa5;font-family:Cinzel,serif;font-size:.85rem;letter-spacing:3px}
+.od-immersive h1 {font:500 clamp(2.6rem,4vw,4.7rem)/1.05 'Cormorant Garamond',Georgia,serif;margin:12px 0 14px;letter-spacing:-1px;color:#fff1c9}
+.od-immersive .od-ornament {font-size:1rem;color:#e8c46a;margin:0 auto 12px;width:60%;display:flex;align-items:center;justify-content:center;white-space:nowrap}
+.od-immersive h2 {font-size:1.8rem;font-style:italic;margin:8px 0;font-weight:600}
+.od-immersive .od-contact-panel>p {font-size:1.25rem;line-height:1.35;margin:8px 0 20px}
+.od-immersive .od-form {display:grid;gap:12px;padding:0;margin:0;border:0;background:none}
+.od-immersive .od-name-email {display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:0}
+.od-immersive .od-form label {position:relative;min-width:0;margin:0;display:block}
+.od-immersive .od-form label>span {position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.od-immersive .od-form label>i {position:absolute;left:15px;top:10px;color:#e1c36b;font-size:1.35rem;font-style:normal;pointer-events:none;line-height:1}
+.od-immersive .od-form input,.od-immersive .od-form select,.od-immersive .od-form textarea {box-sizing:border-box;width:100%;min-width:0;margin:0;padding:10px 15px 10px 45px;border:1px solid #c49c43;border-radius:9px;background:linear-gradient(110deg,#14291ac9,#071d12c9);color:#fff1c5;box-shadow:inset 0 0 8px #0003;font:500 1.05rem/1.25 'Cormorant Garamond',Georgia,serif;min-height:44px}
+.od-immersive .od-form input::placeholder,.od-immersive .od-form textarea::placeholder {color:#fff1c5;opacity:1}
+.od-immersive .od-form select {appearance:none;padding-right:35px;cursor:pointer}
+.od-immersive .od-form select option {background:#10291c;color:#fff1c5}
+.od-immersive .od-subject b {position:absolute;right:16px;top:7px;font-size:1.5rem;font-weight:400;pointer-events:none;color:#e4c66c}
+.od-immersive .od-form textarea {height:88px;min-height:88px;resize:vertical;max-height:240px}
+.od-immersive .od-form :focus-visible,.od-immersive a:focus-visible {outline:2px solid #ffe49c;outline-offset:3px}
+.od-immersive .od-form .btn-primary {width:100%;min-width:0;min-height:46px;margin:0;justify-content:center;padding:9px 18px;font:600 1.25rem/1.2 'Cormorant Garamond',Georgia,serif;text-transform:none;letter-spacing:0;background:linear-gradient(110deg,#cf9f4c,#ffe2a0 52%,#c99c49);color:#102116;border:1px solid #cda65b;border-radius:10px;box-shadow:0 3px 14px #b98c2522}
+.od-immersive .od-form .btn-primary:disabled {opacity:.65;cursor:wait}
+.od-immersive .hidden-field {position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
+.od-immersive .od-error {color:#ffcfaf;font:14px/1.4 system-ui;margin:0;text-align:left}
+.od-immersive .od-success {min-height:235px;display:grid;align-content:center;gap:12px}
+.od-immersive .od-success small {color:#e0d1b0;line-height:1.4}
+.od-immersive .od-link-divider {display:flex;align-items:center;gap:12px;color:#f1ce70;margin:16px 0 14px}
+.od-immersive .od-link-divider::before,.od-immersive .od-link-divider::after {content:'';height:1px;flex:1;background:linear-gradient(90deg,transparent,#c4a153)}
+.od-immersive .od-link-divider::after {transform:scaleX(-1)}
+.od-immersive .od-links {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0;border:0;background:none;margin:0;border-radius:0;min-width:0}
+.od-immersive .od-links>a,.od-immersive .od-links>.od-jls {box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:7px;width:100%;min-width:0;min-height:49px;height:100%;padding:10px 6px;border:1px solid #c7a14b;border-radius:10px;color:#fff0c5;background:#091e12bd;font:500 clamp(.85rem,1vw,1.1rem)/1.2 'Cormorant Garamond',Georgia,serif;text-decoration:none;white-space:normal}
+.od-immersive .od-links>a:hover {background:#294125d9;box-shadow:0 0 12px #cca54633}
+.od-immersive .od-footer {position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:20px;width:100%;padding:12px 2.5%;min-height:70px;background:#03190ff5;border-top:1px solid var(--od-gold);color:#fff0bd;font-size:1.05rem}
+.od-immersive .od-theme {display:flex;justify-content:center;align-items:center;gap:24px;padding:0;border:0;flex-wrap:wrap}
+.od-immersive .od-theme button {font:inherit;text-transform:none;color:#e6bf60;background:#253318a6;border:1px solid #bd9741;border-radius:3px;padding:8px 16px;cursor:pointer}
+.od-immersive .od-theme label {display:flex;align-items:center;gap:16px;font-size:1.05rem;white-space:nowrap}
+.od-immersive .od-theme input {width:130px;max-width:25vw;accent-color:#1683ff}
+.od-immersive .od-footer>i {white-space:nowrap}
+@media(min-width:1500px) and (min-height:950px){.od-immersive .od-composition{padding-top:36px;padding-bottom:42px}.od-immersive .od-contact-panel{padding:28px 36px 34px}.od-immersive h1{margin:16px 0 20px}.od-immersive .od-contact-panel>p{margin:12px 0 24px}.od-immersive .od-form{gap:14px}.od-immersive .od-form textarea{height:90px}.od-immersive .od-link-divider{margin:20px 0}}
+@media(max-width:1100px){.od-immersive .od-contact-panel{width:60%;padding:22px}.od-immersive .od-links{gap:8px}.od-immersive .od-links>a{font-size:.92rem}.od-immersive .od-footer{grid-template-columns:1fr auto}.od-immersive .od-theme{grid-column:1/-1;grid-row:2;gap:18px}.od-immersive .od-footer>i{grid-column:2;grid-row:1}}
+@media(max-width:760px){.od-immersive .od-header{padding:14px 18px;align-items:flex-start}.od-immersive .od-brand{font-size:.8rem;letter-spacing:1.5px;gap:10px}.od-immersive .od-brand em{font-size:.95rem}.od-immersive .od-header button{font-size:.95rem;max-width:130px;padding:0}.od-immersive .od-composition{padding:200px 16px 26px;display:block}.od-immersive .od-contact-panel{width:100%;max-width:600px;margin:auto;padding:25px 20px}.od-immersive .od-backdrop{position:fixed;background-position:center top;background-size:auto 100dvh}.od-immersive h1{font-size:3rem}.od-immersive .od-contact-panel>p{font-size:1.1rem}.od-immersive .od-links{grid-template-columns:repeat(2,minmax(0,1fr))}.od-immersive .od-footer{gap:12px;font-size:.9rem;padding:16px}.od-immersive .od-theme{gap:12px;font-size:1rem}.od-immersive .od-theme label{font-size:.95rem}.od-immersive .desktop-break{display:none}}
+@media(max-width:430px){.od-immersive .od-name-email{grid-template-columns:1fr;gap:12px}.od-immersive .od-contact-panel{padding:24px 16px}.od-immersive .chapter-mark{font-size:.68rem;letter-spacing:2px}.od-immersive h1{font-size:2.6rem}.od-immersive .od-composition{padding-top:170px}.od-immersive .od-footer{grid-template-columns:1fr;text-align:center}.od-immersive .od-footer>i{grid-column:auto;grid-row:3}.od-immersive .od-theme{grid-row:2}.od-immersive .od-theme label{justify-content:center}}
+@media(min-width:761px) and (max-height:900px){.od-immersive .od-contact-panel{padding:18px 24px}.od-immersive .od-composition{padding-top:18px;padding-bottom:18px}.od-immersive h1{font-size:3.2rem;margin:8px 0}.od-immersive h2{font-size:1.5rem;margin:5px 0}.od-immersive .od-ornament{margin-bottom:6px}.od-immersive .od-contact-panel>p{font-size:1.1rem;margin:6px 0 14px}.od-immersive .od-form{gap:10px}.od-immersive .od-form input,.od-immersive .od-form select{min-height:40px;padding-top:8px;padding-bottom:8px}.od-immersive .od-form textarea{height:72px;min-height:72px}.od-immersive .od-form .btn-primary{min-height:42px}.od-immersive .od-links>a{min-height:44px}.od-immersive .od-link-divider{margin:10px 0}.od-immersive .od-header{min-height:68px}.od-immersive .od-footer{min-height:64px}}
+.od-immersive .od-backdrop{background:none}.od-immersive .od-backdrop::before{z-index:0}.od-immersive .od-backdrop::after{content:'';position:absolute;inset:0;z-index:1;background:linear-gradient(90deg,transparent 32%,#071d1266 49%,#071d12b3 80%),url('/assets/open-door-scenery.png') left center / auto 112% no-repeat}
+@media(min-width:1500px) and (min-height:950px){.od-immersive .od-contact-panel{padding:24px 36px 28px}.od-immersive h1{margin:12px 0 14px}.od-immersive .od-contact-panel>p{margin:8px 0 18px}.od-immersive .od-link-divider{margin:14px 0}.od-immersive .od-composition{padding-top:26px;padding-bottom:26px}}
+/* Supplied landscape: gate on the left, quiet forest behind the panel. */
+.od-immersive .od-backdrop{background:url('/assets/open-door-landscape.png') center / cover no-repeat}.od-immersive .od-backdrop::before,.od-immersive .od-backdrop::after{content:none}
+@media(max-width:1100px) and (min-width:761px){.od-immersive .od-composition{padding-top:260px;justify-content:center}.od-immersive .od-contact-panel{width:min(720px,100%)}.od-immersive .od-backdrop{background-position:25% top;background-size:auto 100dvh}}
+@media(max-width:760px){.od-immersive .od-backdrop{background-position:23% top;background-size:auto 100dvh}.od-immersive .od-name-email{grid-template-columns:1fr}.od-immersive .od-form input,.od-immersive .od-form select,.od-immersive .od-form textarea{font-size:16px;min-height:46px}.od-immersive .od-links>a{min-height:48px}}
+@media(max-width:760px){.od-immersive .od-links{grid-auto-rows:1fr}.od-immersive .od-links>a,.od-immersive .od-links>.od-jls{font-size:1rem;min-height:52px}.od-immersive .od-backdrop{background-position:23% top}}
+@media(max-width:430px){.od-immersive .od-links{grid-template-columns:1fr}.od-immersive .od-links>a,.od-immersive .od-links>.od-jls{min-height:48px}}
