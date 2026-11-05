@@ -28,7 +28,7 @@ export default function NarrationBar() {
             </span>
             <div className="nb-caption-wrap">
               <span className="nb-label">
-                NARRATOR {narrating ? "· SPEAKING" : audio.themePlaying ? "" : ""}
+                NARRATOR {narrating ? "· SPEAKING" : ""}
               </span>
               <p className="nb-caption" data-testid="narration-caption" aria-live="polite" hidden={!audio_.captions}>
                 {caption || "The narrator waits — press play to begin the guided journey."}
@@ -37,7 +37,7 @@ export default function NarrationBar() {
             <div className="nb-narr-controls">
               <button
                 data-testid="narration-toggle"
-                onClick={() => (narrating ? narrator.pause() : narrator.resume())}
+                onClick={() => (narrating ? narrator.pause() : narrator.playing ? narrator.resume() : narrator.restart())}
                 aria-label={narrating ? "Pause narration" : "Play narration"}
               >
                 {narrating ? "❚❚" : "▶"}
@@ -45,6 +45,7 @@ export default function NarrationBar() {
               <button data-testid="narration-skip" onClick={() => narrator.skip()} aria-label="Skip narration line">
                 ▶▶
               </button>
+              <button onClick={()=>narrator.restart()} aria-label="Restart narration">↺</button>
             </div>
           </>
         ) : (
@@ -59,7 +60,7 @@ export default function NarrationBar() {
 
       <div className="nb-music" data-testid="music-indicator">
         <span aria-hidden>♪</span>
-        <span>{themeOn ? "Website theme" : current.music}</span>
+        <span>{themeOn ? "Theme Song" : current.music}</span>
       </div>
 
       <div className="nb-actions">
@@ -129,7 +130,7 @@ export default function NarrationBar() {
             <span>Show captions</span>
           </label>
           <p className="settings-note">
-            The narrator voice is AI-generated. Music &amp; ambience are original
+            Narration uses the configured AI voice, or your device’s English voice when unavailable. Music &amp; ambience are original
             synthesized themes; the personal soundtrack uses the official player.
           </p>
         </div>

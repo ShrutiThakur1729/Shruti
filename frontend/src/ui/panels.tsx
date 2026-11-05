@@ -241,7 +241,7 @@ export function WelcomePanel() {
         </button>
       </div>
       <p className="small-copy">
-        The guided journey speaks its narration aloud (an AI-generated voice)
+        The guided journey speaks using the configured narrator or your device’s English voice
         with synchronized captions. You can change this anytime from Help.
       </p>
     </article>

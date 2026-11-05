@@ -1,7 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { audio } from '../audio/AudioEngine';
+import { useGLTF,useTexture } from '@react-three/drei';
 import { useStore } from "../state/store";
 
 export default function Landing() {
+  useEffect(()=>{audio.prepareTheme();useGLTF.preload('/assets/tree-lod.glb');useGLTF.preload('/assets/rocks-lod.glb');useGLTF.preload('/assets/fern-lod.glb');for(const name of ['cobblestone_floor_08','bark_brown_02','forest_ground_04'])for(const type of ['diff','nor_gl','rough'])useTexture.preload(`/assets/${name}_${type}.jpg`);},[]);
   const enter = useStore((s) => s.enter);
   const stars = useMemo(
     () =>

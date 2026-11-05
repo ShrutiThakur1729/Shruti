@@ -1,3 +1,4 @@
+import { audio } from "../audio/AudioEngine";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { identity } from "../data/content";
@@ -7,6 +8,8 @@ export default function OpenDoor() {
   const [state, setState] = useState<"idle" | "sending" | "ok" | "error">("idle");
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "", company: "" });
+  const [themePlaying,setThemePlaying]=useState(audio.themePlaying);
+  useEffect(()=>{const update=()=>setThemePlaying(audio.themePlaying);window.addEventListener("twi-audio",update);return()=>window.removeEventListener("twi-audio",update);},[]);
   const pending = useRef(false);
   const submissionId = useRef(crypto.randomUUID());
   useEffect(() => {
@@ -51,7 +54,7 @@ export default function OpenDoor() {
         </article>
         <aside className="od-links" aria-label="Connect with Shruti"><span aria-hidden>✧</span><a href={identity.linkedin} target="_blank" rel="noopener noreferrer" data-testid="od-linkedin">in <span>LinkedIn Profile ↗</span></a><a href={identity.github} target="_blank" rel="noopener noreferrer" data-testid="od-github">⌘ <span>GitHub Profile ↗</span></a><a href={identity.resume} download="Shruti_Thakur_Resume.pdf" data-testid="od-resume">↓ <span>Download Resume</span></a><a href={identity.jls} target="_blank" rel="noopener noreferrer" data-testid="od-jls" className="od-jls">JLS Technologies ↗</a><span aria-hidden>✧</span></aside>
       </div>
-      <footer className="od-footer"><span>✧ THE WORLD INSIDE</span><i>Thank you for visiting my world.</i></footer>
+      <div className="od-theme"><span>♪ Theme Song</span><button onClick={()=>{audio.init();if(audio.themePlaying)audio.pauseTheme();else audio.startTheme();setThemePlaying(audio.themePlaying);}}>{themePlaying?"Pause Theme Song":"Play Theme Song"}</button><label>Volume <input aria-label="Theme Song volume" type="range" min="0" max="1" step=".05" defaultValue={audio.settings.music} onChange={e=>useStore.getState().setAudio({music:Number(e.target.value)})}/></label></div><footer className="od-footer"><span>✧ THE WORLD INSIDE</span><i>Thank you for visiting my world.</i></footer>
     </section>
   );
 }
