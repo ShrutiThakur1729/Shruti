@@ -16,6 +16,95 @@ import {
 } from "./shared/Props";
 import { plaqueTexture } from "./shared/textures";
 import { useStore } from "../state/store";
+import { GrassField, Bushes, Torch, type Bush } from "./shared/Nature";
+
+const rectDist = (x: number, z: number) => {
+  const dx = Math.max(105 - x, 0, x - 195);
+  const dz = Math.max(-297 - z, 0, z + 207);
+  return Math.hypot(dx, dz);
+};
+
+const castleSample = (r: () => number): [number, number] | null => {
+  const x = 62 + r() * 176;
+  const z = -326 + r() * 160;
+  const d = rectDist(x, z);
+  if (d > 4.5 && d < 16.5) return null;
+  if (d > 0 && d <= 4.5) return null;
+  if (Math.abs(x - 150) < 6.5 && z > -212) return null;
+  if (d === 0) {
+    if (x < 108.5 || x > 191.5 || z < -293.5 || z > -210.5) return null;
+    if (Math.abs(x - 150) < 3.6 && z > -252) return null;
+    if (Math.hypot(x - CASTLE.keep.x, z - CASTLE.keep.z) < 14.5) return null;
+    if (Math.hypot(x - CASTLE.fountain.x, z - CASTLE.fountain.z) < 6) return null;
+    if (Math.hypot(x - CASTLE.statue.x, z - CASTLE.statue.z) < 2.4) return null;
+  }
+  return [x, z];
+};
+
+const castleColor = (x: number, z: number, h: number) => {
+  const d = rectDist(x, z);
+  const road = Math.abs(x - 150) < 4.5 && z > -212;
+  const n = noise(x * 0.08, z * 0.08);
+  if (road) return `#${new T.Color().setHSL(0.09, 0.22, 0.6 + n * 0.08).getHexString()}`;
+  if (h < 0.6) return `#${new T.Color().setHSL(0.12, 0.2, 0.42).getHexString()}`;
+  const lush = d === 0 ? 0.7 : 0.64;
+  return `#${new T.Color().setHSL(0.24 + n * 0.02, 0.45, lush + n * 0.1).getHexString()}`;
+};
+
+function CastleNature() {
+  const forest = useMemo(() => {
+    const r = random(57);
+    const list = [];
+    for (let i = 0; i < 260 && list.length < 70; i++) {
+      const x = 40 + r() * 220;
+      const z = -340 + r() * 190;
+      if (rectDist(x, z) < 24 || (Math.abs(x - 150) < 16 && z > -215)) continue;
+      list.push({ x, y: castleGround(x, z) - 0.2, z, s: 0.7 + r() * 0.7, r: r() * 6.28 });
+    }
+    return list;
+  }, []);
+  const rocks = useMemo(() => {
+    const r = random(61);
+    return Array.from({ length: 40 }, () => {
+      const x = 70 + r() * 160;
+      const z = -190 + r() * 26;
+      return { x, y: castleGround(x, z) - 0.3, z, s: 0.4 + r() * 0.9, r: r() * 6 };
+    }).filter((p) => Math.abs(p.x - 150) > 8);
+  }, []);
+  const ferns = useMemo(() => {
+    const r = random(62);
+    const list = [];
+    for (let i = 0; i < 200; i++) {
+      const x = 108 + r() * 84;
+      const z = -294 + r() * 84;
+      if (x > 112 && x < 188 && z > -290 && z < -213) continue;
+      list.push({ x, y: 2, z, s: 0.5 + r() * 0.6, r: r() * 6.28 });
+    }
+    return list;
+  }, []);
+  return (
+    <>
+      <GrassField seed={44} sample={castleSample} heightFn={castleGround} density={2.2} hue={0.21} flowerColors={["#e8d9a3", "#ffffff", "#c6b8d5", "#d8a35c"]} flowerRatio={0.035} />
+      <InstancedModel url="/assets/tree.glb" height={14} placements={forest} maxDistance={40} wind />
+      <InstancedModel url="/assets/tree-lod.glb" height={14} placements={forest} minDistance={40} shadows={false} />
+      <InstancedModel url="/assets/rocks.glb" height={2} placements={rocks} maxDistance={30} />
+      <InstancedModel url="/assets/rocks-lod.glb" height={2} placements={rocks} minDistance={30} shadows={false} />
+      <InstancedModel url="/assets/fern-lod.glb" height={0.3} placements={ferns} wind shadows={false} />
+      {[
+        [143.2, 4.2, -205.2],
+        [156.8, 4.2, -205.2],
+        [146.5, 4.2, -209.2],
+        [153.5, 4.2, -209.2],
+        [141, 4.6, -251.6],
+        [159, 4.6, -251.6],
+        [132, 5, -208.8],
+        [168, 5, -208.8],
+      ].map((p, i) => (
+        <Torch key={i} position={p as [number, number, number]} light={i < 6} />
+      ))}
+    </>
+  );
+}
 
 function CastleMountains() {
   const geometry = useMemo(() => {
@@ -114,15 +203,20 @@ function Tower({
   h?: number;
   roofColor?: string;
 }) {
+  const stone = useSurface("cobblestone_floor_08", 5);
   return (
     <group position={position}>
       <mesh position={[0, h / 2, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[r, r * 1.08, h, 14]} />
-        <meshStandardMaterial color="#8d8477" roughness={0.95} />
+        <cylinderGeometry args={[r, r * 1.08, h, 24]} />
+        <primitive object={stone} attach="material" />
       </mesh>
-      <mesh position={[0, h + 3, 0]} castShadow>
-        <coneGeometry args={[r * 1.25, 6.4, 14]} />
-        <meshStandardMaterial color={roofColor} roughness={0.8} />
+      <mesh position={[0, h + 0.4, 0]} castShadow>
+        <cylinderGeometry args={[r * 1.12, r * 1.02, 0.8, 24]} />
+        <primitive object={stone} attach="material" />
+      </mesh>
+      <mesh position={[0, h + 3.6, 0]} castShadow>
+        <coneGeometry args={[r * 1.25, 6.4, 24]} />
+        <meshStandardMaterial color={roofColor} roughness={0.7} metalness={0.15} />
       </mesh>
       <mesh position={[0, h + 6.6, 0]}>
         <sphereGeometry args={[0.35, 8, 8]} />
@@ -321,14 +415,12 @@ function Statue() {
 function CourtyardDressing() {
   const stone = useSurface("cobblestone_floor_08");
   const hedgeItems = useMemo(() => {
-    const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
-    for (let z = -216; z >= -290; z -= 3.4) {
-      list.push({ p: new T.Vector3(126, 3, z), s: new T.Vector3(2.6, 1.9, 3), r: 0 });
-      list.push({ p: new T.Vector3(174, 3, z), s: new T.Vector3(2.6, 1.9, 3), r: 0 });
+    const list: Bush[] = [];
+    for (let z = -216; z >= -290; z -= 1.9) {
+      list.push({ x: 126, y: 2.7, z, s: [1.5, 1.2, 1.6], r: z });
+      list.push({ x: 174, y: 2.7, z, s: [1.5, 1.2, 1.6], r: z });
     }
-    for (let x = 128; x <= 172; x += 3.4) {
-      list.push({ p: new T.Vector3(x, 3, -292), s: new T.Vector3(3, 1.9, 2.6), r: 0 });
-    }
+    for (let x = 128; x <= 172; x += 1.9) list.push({ x, y: 2.7, z: -292, s: [1.6, 1.2, 1.5], r: x });
     return list;
   }, []);
   const pathStones = useMemo(() => {
@@ -363,7 +455,7 @@ function CourtyardDressing() {
   const plaque = useMemo(() => plaqueTexture("The Courtyard", "Fountain of the Builder", ""), []);
   return (
     <group>
-      <Stones items={hedgeItems} material={stone} shadows={false} />
+      <Bushes items={hedgeItems} seed={21} hue={0.28} lightness={0.15} />
       <Stones items={pathStones} material={stone} shadows={false} />
       <InstancedModel url="/assets/tree.glb" height={13} placements={trees} maxDistance={60} />
       <mesh position={[150, 2.1, -237.5]} rotation={[-Math.PI / 2, 0, 0]}>
@@ -411,20 +503,20 @@ function Bridge() {
 }
 
 function ApproachTerrain() {
-  return <TerrainMesh width={420} depth={340} center={[150, -240]} heightFn={castleGround} segments={120} />;
+  return <TerrainMesh width={420} depth={340} center={[150, -240]} heightFn={castleGround} colorFn={castleColor} segments={140} />;
 }
 
 export default function CastleWorld() {
   const quality = useStore((s) => s.quality);
   return (
     <>
-      <color attach="background" args={["#cfc4ae"]} />
-      <fog attach="fog" args={["#cfc4ae", 90, 430]} />
-      <Sky sunPosition={[-60, 22, -85]} turbidity={4} rayleigh={2.2} mieCoefficient={0.006} />
-      <hemisphereLight args={["#e8dcc2", "#3d3a2c", 1.35]} />
+      <color attach="background" args={["#d3c2a4"]} />
+      <fog attach="fog" args={["#d3c2a4", 80, 420]} />
+      <Sky sunPosition={[-60, 16, -85]} turbidity={5} rayleigh={2.4} mieCoefficient={0.008} mieDirectionalG={0.85} />
+      <hemisphereLight args={["#eadbbf", "#38402c", 1.25]} />
       <directionalLight
-        position={[-45, 42, -20]}
-        intensity={3.1}
+        position={[-45, 32, -20]}
+        intensity={3.3}
         color="#ffd9a0"
         castShadow={quality !== "low"}
         shadow-mapSize={[quality === "high" ? 2048 : 1024, quality === "high" ? 2048 : 1024]}
@@ -445,6 +537,7 @@ export default function CastleWorld() {
       <Fountain />
       <Statue />
       <CourtyardDressing />
+      <CastleNature />
       <GateSign />
       <DustMotes count={60} area={[160, 18, 160]} center={[150, 10, -240]} />
     </>

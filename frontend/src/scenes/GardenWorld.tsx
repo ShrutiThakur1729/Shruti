@@ -18,6 +18,63 @@ import { plaqueTexture } from "./shared/textures";
 import { useStore } from "../state/store";
 import { gardenNotes } from "../data/content";
 import GuestbookNotes from "./GuestbookNotes";
+import { GrassField, Bushes, treeRing, type Bush } from "./shared/Nature";
+
+const gardenSample = (r: () => number): [number, number] | null => {
+  const a = r() * Math.PI * 2;
+  const d = Math.sqrt(r()) * (GARDEN.radius - 2.2);
+  const x = GARDEN.cx + Math.cos(a) * d;
+  const z = GARDEN.cz + Math.sin(a) * d;
+  const { pond, gazebo, conservatory: c, tree } = GARDEN;
+  if (Math.hypot(x - pond.x, z - pond.z) < pond.r + 0.4) return null;
+  if (Math.hypot(x - gazebo.x, z - gazebo.z) < 3.6) return null;
+  if (Math.hypot(x - tree.x, z - tree.z) < 2.6) return null;
+  if (Math.abs(x - c.x) < c.w + 0.3 && Math.abs(z - c.z) < c.d + 0.3) return null;
+  if (Math.abs(x - GARDEN.cx) < 1.6 && z > GARDEN.cz + 14) return null;
+  return [x, z];
+};
+
+function GardenNature() {
+  const pondRocks = useMemo(() => {
+    const r = random(71);
+    const { pond } = GARDEN;
+    return Array.from({ length: 34 }, () => {
+      const a = r() * Math.PI * 2;
+      const x = pond.x + Math.cos(a) * (pond.r + 0.2 + r() * 1.2);
+      const z = pond.z + Math.sin(a) * (pond.r + 0.2 + r() * 1.2);
+      return { x, y: gardenGround(x, z) - 0.25, z, s: 0.3 + r() * 0.6, r: r() * 6 };
+    }).filter((p) => !(p.x > -167 && p.x < -156 && Math.abs(p.z + 141) < 2.4));
+  }, []);
+  const ferns = useMemo(() => {
+    const r = random(23);
+    const list = [];
+    for (let i = 0; i < 160; i++) {
+      const a = r() * Math.PI * 2;
+      const d = GARDEN.radius - 3 - r() * 4;
+      const x = GARDEN.cx + Math.cos(a) * d;
+      const z = GARDEN.cz + Math.sin(a) * d;
+      if (Math.abs(x - GARDEN.cx) < 4 && z > GARDEN.cz) continue;
+      list.push({ x, y: gardenGround(x, z), z, s: 0.5 + r() * 0.7, r: r() * 6.28 });
+    }
+    return list;
+  }, []);
+  const forest = useMemo(() => treeRing(91, GARDEN.cx, GARDEN.cz, GARDEN.radius + 6, GARDEN.radius + 34, 46, gardenGround), []);
+  return (
+    <>
+      <GrassField seed={33} sample={gardenSample} heightFn={gardenGround} density={2} hue={0.23} flowerColors={["#f2d6e0", "#e8d9a3", "#c8a6d8", "#ffffff", "#e89aa8"]} flowerRatio={0.07} />
+      <InstancedModel url="/assets/rocks.glb" height={1.6} placements={pondRocks} maxDistance={22} />
+      <InstancedModel url="/assets/rocks-lod.glb" height={1.6} placements={pondRocks} minDistance={22} shadows={false} />
+      <InstancedModel url="/assets/fern-lod.glb" height={0.32} placements={ferns} wind shadows={false} />
+      <InstancedModel url="/assets/tree-lod.glb" height={16} placements={forest} shadows={false} />
+      <InstancedModel
+        url="/assets/tree.glb"
+        height={26}
+        placements={[{ x: GARDEN.tree.x + 1, y: gardenGround(GARDEN.tree.x, GARDEN.tree.z) - 0.3, z: GARDEN.tree.z, s: 1, r: 1.3 }]}
+        wind
+      />
+    </>
+  );
+}
 
 function GardenTerrain() {
   return (
@@ -28,8 +85,8 @@ function GardenTerrain() {
       heightFn={gardenGround}
       segments={110}
       colorFn={(x, z) => {
-        const l = 0.5 + noise(x * 0.09, z * 0.09) * 0.2;
-        const c = new T.Color().setHSL(0.24, 0.32, l);
+        const l = 0.62 + noise(x * 0.09, z * 0.09) * 0.16;
+        const c = new T.Color().setHSL(0.25, 0.42, l);
         return `#${c.getHexString()}`;
       }}
     />
@@ -37,26 +94,22 @@ function GardenTerrain() {
 }
 
 function HedgeWall() {
-  const hedgeItems = useMemo(() => {
-    const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
-    const n = 56;
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      const x = GARDEN.cx + Math.cos(a) * GARDEN.radius;
-      const z = GARDEN.cz + Math.sin(a) * GARDEN.radius;
-      list.push({
-        p: new T.Vector3(x, gardenGround(x, z) + 1.4, z),
-        s: new T.Vector3(4.6, 3.2, 2.2),
-        r: -a,
-      });
+  const items = useMemo(() => {
+    const r = random(17);
+    const list: Bush[] = [];
+    for (const [ring, n, h] of [[0, 120, 3.4], [1.8, 96, 2.6], [-1.6, 80, 1.6]] as const) {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2 + r() * 0.03;
+        const rad = GARDEN.radius + ring + (r() - 0.5) * 0.6;
+        const x = GARDEN.cx + Math.cos(a) * rad;
+        const z = GARDEN.cz + Math.sin(a) * rad;
+        const s = 1.4 + r() * 0.8;
+        list.push({ x, y: gardenGround(x, z) + h * 0.45, z, s: [s * 1.2, h * (0.45 + r() * 0.2), s], r: -a });
+      }
     }
-    return list;
+    return list.filter((b) => !(Math.abs(b.x - GARDEN.cx) < 3.2 && b.z > GARDEN.cz + 30));
   }, []);
-  const material = useMemo(
-    () => new T.MeshStandardMaterial({ color: "#2e4a30", roughness: 1 }),
-    []
-  );
-  return <Stones items={hedgeItems} material={material} shadows={false} />;
+  return <Bushes items={items} seed={4} hue={0.29} lightness={0.14} />;
 }
 
 function OldTree() {
@@ -90,14 +143,19 @@ function OldTree() {
   }, []);
   const canopies = useMemo(() => {
     const r = random(5);
-    return Array.from({ length: 7 }, (_, i) => ({
-      p: new T.Vector3(
-        GARDEN.tree.x + (r() - 0.5) * 22,
-        gardenGround(GARDEN.tree.x, GARDEN.tree.z) + 21 + r() * 8,
-        GARDEN.tree.z + (r() - 0.5) * 20
-      ),
-      s: 4.5 + r() * 3.5,
-    }));
+    const gy = gardenGround(GARDEN.tree.x, GARDEN.tree.z);
+    return Array.from({ length: 26 }, (): Bush => {
+      const a = r() * Math.PI * 2;
+      const d = r() * 13;
+      const s = 2.6 + r() * 2.6;
+      return {
+        x: GARDEN.tree.x + 2 + Math.cos(a) * d,
+        y: gy + 18 + r() * 7 - d * 0.25,
+        z: GARDEN.tree.z - 1 + Math.sin(a) * d,
+        s: [s, s * 0.7, s],
+        r: r() * 6,
+      };
+    });
   }, []);
   return (
     <group>
@@ -106,12 +164,7 @@ function OldTree() {
           <mesh key={i} geometry={g} material={bark} castShadow receiveShadow />
         ))}
       </group>
-      {canopies.map((c, i) => (
-        <mesh key={i} position={c.p} scale={[c.s, c.s * 0.72, c.s]} castShadow>
-          <dodecahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color={i % 2 ? "#3a5a2e" : "#31492a"} roughness={1} flatShading />
-        </mesh>
-      ))}
+      <Bushes items={canopies} seed={8} hue={0.25} lightness={0.17} />
     </group>
   );
 }
@@ -202,12 +255,11 @@ function Waterfall() {
   const w = GARDEN.waterfall;
   return (
     <group position={[w.x, gardenGround(w.x, w.z), w.z]}>
-      {[0, 1, 2].map((i) => (
-        <mesh key={i} position={[i * 1.2 - 1.2, 1.1 + i * 0.4, -i * 0.6]} scale={[2.4 - i * 0.4, 2, 2 - i * 0.3]} castShadow>
-          <dodecahedronGeometry args={[1, 1]} />
-          <meshStandardMaterial color="#5c6a5e" roughness={1} flatShading />
-        </mesh>
-      ))}
+      <InstancedModel
+        url="/assets/rocks.glb"
+        height={2.6}
+        placements={[0, 1, 2].map((i) => ({ x: i * 1.2 - 1.2, y: -0.2 + i * 0.4, z: -i * 0.6, s: 1.3 - i * 0.2, r: i * 2.1 }))}
+      />
       <mesh ref={ref} position={[0, 1.4, 0.8]}>
         <planeGeometry args={[1.6, 3.4, 6, 14]} />
         <meshStandardMaterial color="#d7e8db" transparent opacity={0.6} roughness={0.3} side={T.DoubleSide} />
@@ -391,12 +443,19 @@ function RoseArches() {
     }
     return list;
   }, []);
+  const leaves = useMemo(
+    () =>
+      flowers
+        .filter((_, i) => i % 2 === 0)
+        .map((f, i): Bush => ({ x: f.p.x, y: f.p.y - 0.1, z: f.p.z, s: [0.32, 0.24, 0.32], r: i })),
+    [flowers]
+  );
   const ref = useRef<T.InstancedMesh>(null);
   useLayoutEffect(() => {
     const o = new T.Object3D();
     flowers.forEach((f, i) => {
       o.position.copy(f.p);
-      o.scale.setScalar(0.16 + (i % 4) * 0.03);
+      o.scale.setScalar(0.07 + (i % 4) * 0.02);
       o.rotation.set(i, i * 2, 0);
       o.updateMatrix();
       ref.current!.setMatrixAt(i, o.matrix);
@@ -412,9 +471,10 @@ function RoseArches() {
           <meshStandardMaterial color="#5a4a3a" roughness={0.85} />
         </mesh>
       ))}
+      <Bushes items={leaves} seed={12} hue={0.3} lightness={0.18} shadows={false} />
       <instancedMesh ref={ref} args={[undefined, undefined, flowers.length]}>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshStandardMaterial roughness={0.7} />
+        <icosahedronGeometry args={[1, 1]} />
+        <meshStandardMaterial roughness={0.6} emissive="#3a0f18" emissiveIntensity={0.2} />
       </instancedMesh>
     </group>
   );
@@ -521,14 +581,14 @@ function GardenDressing() {
         d = r() * (GARDEN.radius - 3);
       const x = GARDEN.cx + Math.cos(a) * d,
         z = GARDEN.cz + Math.sin(a) * d;
-      return { x, y: gardenGround(x, z), z, s: 0.06 + r() * 0.1, c: r() };
+      return { x, y: gardenGround(x, z), z, s: 0.04 + r() * 0.04, c: r() };
     });
   }, []);
   const ref = useRef<T.InstancedMesh>(null);
   useLayoutEffect(() => {
     const o = new T.Object3D();
     flowers.forEach((f, i) => {
-      o.position.set(f.x, f.y + 0.12, f.z);
+      o.position.set(f.x, f.y + 0.38, f.z);
       o.scale.setScalar(f.s);
       o.updateMatrix();
       ref.current!.setMatrixAt(i, o.matrix);
@@ -597,14 +657,14 @@ export default function GardenWorld() {
   const quality = useStore((s) => s.quality);
   return (
     <>
-      <color attach="background" args={["#d8b98a"]} />
-      <fog attach="fog" args={["#d8b98a", 55, 220]} />
-      <Sky sunPosition={[70, 8, -60]} turbidity={5} rayleigh={2.6} mieCoefficient={0.012} />
-      <hemisphereLight args={["#e8c9a0", "#3a3226", 1.1]} />
+      <color attach="background" args={["#d9b48a"]} />
+      <fog attach="fog" args={["#d9b48a", 45, 200]} />
+      <Sky sunPosition={[70, 6, -60]} turbidity={6} rayleigh={2.8} mieCoefficient={0.014} mieDirectionalG={0.86} />
+      <hemisphereLight args={["#f0cfa4", "#34402a", 1.15]} />
       <directionalLight
-        position={[50, 24, -30]}
-        intensity={2.6}
-        color="#ffc98a"
+        position={[50, 18, -30]}
+        intensity={3}
+        color="#ffbf7a"
         castShadow={quality !== "low"}
         shadow-mapSize={[quality === "high" ? 2048 : 1024, quality === "high" ? 2048 : 1024]}
         shadow-camera-left={-55}
@@ -623,6 +683,7 @@ export default function GardenWorld() {
       <RoseArches />
       <Nooks />
       <GardenDressing />
+      <GardenNature />
       <GuestbookNotes />
       <Fireflies center={[GARDEN.cx, 2, GARDEN.cz]} radius={26} />
       <DustMotes count={40} area={[60, 10, 60]} center={[GARDEN.cx, 6, GARDEN.cz]} color="#ffe9b8" size={0.03} />
