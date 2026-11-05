@@ -1,5 +1,6 @@
 import type { Point, WorldId } from "./worlds";
 import type { Zone } from "../state/store";
+import { WING_ORIGIN } from '../systems/castleLayout';
 
 export type InteractKind =
   | "story"
@@ -29,7 +30,7 @@ export type Interaction = {
   radius?: number;
 };
 
-export const interactions: Interaction[] = [
+const localInteractions: Interaction[] = [
   // — The First Hello —
   {
     id: "hello-story",
@@ -247,6 +248,12 @@ export const interactions: Interaction[] = [
   },
 ];
 
+export const interactions:Interaction[]=localInteractions.filter(it=>!['galleryDoor','archivesDoor','hallDoor'].includes(it.kind)).map(it=>{
+  if(it.zone==='gallery'||it.zone==='library'){
+    const origin=WING_ORIGIN[it.zone];return {...it,pos:[it.pos[0]+origin[0],it.pos[1]+origin[2]]};
+  }return it;
+});
+
 export function nearbyInteraction(
   world: WorldId,
   zone: Zone | null,
@@ -288,5 +295,5 @@ export function findInteraction(id: string): Interaction | undefined {
 export function interactionPoint(id: string): Point | null {
   const it = findInteraction(id);
   if (!it) return null;
-  return [it.pos[0], 0, it.pos[1]];
+  return [it.pos[0], it.zone==='gallery'||it.zone==='library'?6.25:0, it.pos[1]];
 }
