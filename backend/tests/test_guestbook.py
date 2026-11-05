@@ -4,7 +4,7 @@ import pytest
 import requests
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL').rstrip('/')
-ADMIN_KEY = 'd066ad7d91b1a9c54fdcb9bb8c444d2f'
+ADMIN_KEY = os.environ['GUESTBOOK_ADMIN_KEY']
 ADMIN = {'X-Admin-Key': ADMIN_KEY}
 created_ids = []
 
