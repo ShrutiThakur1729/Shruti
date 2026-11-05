@@ -66,7 +66,7 @@ const MUSIC: Record<WorldId, WorldMusic> = {
 
 const midi = (n: number) => 440 * Math.pow(2, (n - 69) / 12);
 
-class AudioEngine {
+export class AudioEngine {
   ctx: AudioContext | null = null;
   master: GainNode | null = null;
   musicBus: GainNode | null = null;
@@ -97,6 +97,24 @@ class AudioEngine {
   private narrationResolve: (()=>void) | null = null;
   private narrationSerial = 0;
   private narrationPaused = false;
+  private utterance: SpeechSynthesisUtterance | null = null;
+  get voiceActive(){return !!this.narrationEl || !!this.utterance;}
+  prepareTheme() {
+    if(this.themeEl)return;
+    this.themeEl=new Audio('/audio/theme-song.m4a');this.themeEl.preload='auto';this.themeEl.loop=true;
+    this.themeEl.addEventListener('error',()=>{this.themeAvailable=false;this.themePlaying=false;});
+    this.themeEl.addEventListener('playing',()=>{this.themeAvailable=true;this.themePlaying=true;window.dispatchEvent(new Event('twi-audio'));});
+    this.themeEl.load();
+  }
+  private speakBrowser(text:string):Promise<boolean>{
+    if(!('speechSynthesis' in window))return Promise.resolve(false);
+    const u=new SpeechSynthesisUtterance(text);this.utterance=u;
+    const voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith('en'));
+    u.voice=voices.find(v=>/zira|samantha|jenny|aria|female|susan|hazel/i.test(v.name))??voices[0]??null;
+    u.rate=.93;u.volume=this.settings.voice*(this.settings.muted?0:this.settings.master);
+    this.duck(true);
+    return new Promise(resolve=>{this.narrationResolve=()=>resolve(false);const done=(ok:boolean)=>{if(this.utterance!==u)return;this.utterance=null;this.narrationResolve=null;this.duck(false);resolve(ok);};u.onend=()=>done(true);u.onerror=()=>done(false);speechSynthesis.speak(u);});
+  }
   private worldTimer: number | null = null;
 
   get supported() {
@@ -119,14 +137,13 @@ class AudioEngine {
     const data = this.noiseBuffer.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     this.applyVolumes();
-    this.detectTheme();
+    this.prepareTheme();
   }
 
   private async detectTheme() {
     try {
-      const res = await fetch("/audio/website-theme.m4a", { method: "HEAD" });
+      const res = await fetch("/audio/theme-song.m4a", { method: "HEAD" });
       this.themeAvailable = res.ok && !!res.headers.get('content-type')?.startsWith('audio/');
-      if(this.themeAvailable)this.startTheme();
     } catch {
       this.themeAvailable = false;
     }
@@ -140,13 +157,14 @@ class AudioEngine {
     this.master.gain.setTargetAtTime(muted ? 0 : master, now, 0.08);
     if (this.musicBus) {
       this.musicBus.gain.setTargetAtTime(
-        this.magicShopActive ? 0 : music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
+        this.magicShopActive || this.themePlaying ? 0 : music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
         now,
         0.2
       );
     }
     if (this.sfxBus) this.sfxBus.gain.setTargetAtTime(sfx, now, 0.08);
     if (this.narrationEl) this.narrationEl.volume = Math.min(1, this.settings.voice * (muted ? 0 : master));
+    if(this.utterance)this.utterance.volume=this.settings.voice*(muted?0:master);
     if (this.themeEl) this.themeEl.volume = Math.min(1, music * (muted ? 0 : master) * (this.ducked ? .25 : 1.2));
     if(this.ambientLayer)this.ambientLayer.gain.setTargetAtTime(sfx,now,.1);
   }
@@ -175,25 +193,27 @@ class AudioEngine {
       this.worldTimer=null;
       this.startProceduralMusic();
       if(!this.magicShopActive)this.startAmbient(this.world);
-    }, 900);
+    }, 0);
   }
 
   startTheme() {
-    if (!this.themeAvailable || this.themePlaying) return;
-    this.themeEl = new Audio("/audio/website-theme.m4a");
-    this.themeEl.loop = true;
-    this.themeEl.addEventListener("ended", () => (this.themePlaying = false));
-    this.themeEl.play().then(() => {
+    if(this.worldTimer){window.clearTimeout(this.worldTimer);this.worldTimer=null;}
+    this.prepareTheme();
+    if (this.themePlaying) return;
+    this.applyVolumes();
+    this.themeEl!.play().then(() => {
       this.themePlaying = true;
       this.stopProceduralMusic();
       if(this.ctx&&this.musicBus)this.musicBus.gain.setTargetAtTime(0,this.ctx.currentTime,.3);
       this.applyVolumes();
-    }).catch(() => {});
+      this.stopAmbient();
+    }).catch(() => {this.themePlaying=false;window.dispatchEvent(new Event('twi-audio'));});
   }
 
   pauseTheme() {
     this.themeEl?.pause();
     this.themePlaying = false;
+    window.dispatchEvent(new Event('twi-audio'));
   }
 
   resumeTheme() {
@@ -309,7 +329,6 @@ class AudioEngine {
     } else if (world === "castle") {
       mkNoise("lowpass", 220, 0.055, 0.04, 0.025); // deep wind around stone
       mkNoise("bandpass", 520, 0.008, 0.09, 0.005, 2); // whistle through towers
-      this.scheduleCrackle(layer);
       this.scheduleBell(layer, 9000);
     } else {
       mkNoise("lowpass", 320, 0.035, 0.06, 0.015); // evening breeze
@@ -604,7 +623,7 @@ class AudioEngine {
   async narrate(text: string): Promise<boolean> {
     this.stopNarration();
     const serial=this.narrationSerial;
-    if (!BACKEND) return false;
+    if (!BACKEND) return this.speakBrowser(text);
     const controller=new AbortController();this.narrationAbort=controller;
     try {
       const res = await fetch(`${BACKEND}/api/narrate`, {
@@ -613,7 +632,7 @@ class AudioEngine {
         body: JSON.stringify({ text }),
         signal: controller.signal,
       });
-      if (!res.ok) return false;
+      if (!res.ok) return serial===this.narrationSerial?this.speakBrowser(text):false;
       const blob = await res.blob();
       if(serial!==this.narrationSerial)return false;
       const url = URL.createObjectURL(blob);
@@ -635,21 +654,24 @@ class AudioEngine {
       return true;
     } catch {
       if(serial===this.narrationSerial){this.narrationEl = null;this.duck(false);}
-      return false;
+      return serial===this.narrationSerial?this.speakBrowser(text):false;
     }
   }
 
   pauseNarration() {
+    if(this.utterance)window.speechSynthesis.pause();
     this.narrationPaused=true;
     this.narrationEl?.pause();
   }
 
   resumeNarration() {
+    if(this.utterance)window.speechSynthesis.resume();
     this.narrationPaused=false;
     this.narrationEl?.play().catch(() => {});
   }
 
   stopNarration() {
+    if(this.utterance){window.speechSynthesis.cancel();this.utterance=null;}
     this.narrationPaused=false;
     this.narrationSerial++;
     this.narrationAbort?.abort(); this.narrationAbort=null;

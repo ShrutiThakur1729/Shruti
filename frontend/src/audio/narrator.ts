@@ -66,7 +66,7 @@ class Narrator {
     this.paused = false;
     audio.resumeNarration();
     this.cb.onState(true);
-    if (!audio.narrationEl) {
+    if (!audio.voiceActive) {
       // was in a text-only hold — restart the current line
       this.playLine(++this.token);
     }
@@ -78,6 +78,8 @@ class Narrator {
     this.index++;
     this.playLine(++this.token);
   }
+
+  restart(){if(this.queue.length)this.play(this.seq,[...this.queue]);}
 
   stop() {
     this.token++;
