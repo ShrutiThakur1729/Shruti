@@ -129,7 +129,11 @@ export const useStore = create<WorldState>((set, get) => ({
   bookReader: isTouch,
   bookClosing: false,
 
-  set: (partial) => set(partial),
+  set: (partial) => {
+    if(partial.phase==='opendoor'){audio.init();audio.startTheme();}
+    if(partial.phase==='world'&&get().phase==='opendoor'){audio.pauseTheme();audio.setWorld(get().world);}
+    set(partial);
+  },
 
   openPanel: (panel, refId = null) => {
     document.exitPointerLock?.();
@@ -142,7 +146,7 @@ export const useStore = create<WorldState>((set, get) => ({
     set({ panel: null, refId: null, bookClosing:false });
   },
 
-  enter: (guided) => set({ phase: "world", entered: true, guided, panel: "welcome", caption: "Hello World. Welcome to a little universe called Shruti." }),
+  enter: (guided) => {audio.init();audio.setWorld('hello');set({ phase: "world", entered: true, guided, panel: "welcome", caption: "Hello World. Welcome to a little universe called Shruti." });},
 
   travelTo: (world, view) =>
     set(() => ({
