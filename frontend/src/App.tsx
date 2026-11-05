@@ -17,15 +17,17 @@ import {
   BookPanel,
   PoemsPanel,
   ReadingPanel,
-  SoundtrackPanel,
   NotePanel,
   WelcomePanel,
 } from "./ui/panels";
 import OpenDoor from "./ui/OpenDoor";
+import SoundtrackPlayer from './ui/SoundtrackPlayer';
 import GuestbookPanel from "./ui/GuestbookPanel";
 import GestureControl from "./ui/GestureControl";
 import { bookBus, BookExperience } from "./scenes/CastleWings";
-import { books } from "./data/content";
+import { books,projects } from "./data/content";
+import type { GestureAction } from "./systems/gestureRecognizer";
+import { narrationScripts } from "./data/narration";
 
 class SceneError extends React.Component<
   { children: React.ReactNode },
@@ -69,7 +71,7 @@ function Dialog({
       }
       if (e.key !== "Tab") return;
       const nodes = ref.current?.querySelectorAll<HTMLElement>(
-        'button:not(:disabled),a[href],[tabindex="0"]'
+        'button:not(:disabled),a[href],input,textarea,select,[tabindex="0"]'
       );
       if (!nodes?.length) return;
       const first = nodes[0],
@@ -110,10 +112,15 @@ function BookOverlay() {
   const refId = useStore((s) => s.refId);
   const closePanel = useStore((s) => s.closePanel);
   const book = books.find((b) => b.id === refId);
+  useEffect(()=>{
+    const key=(e:KeyboardEvent)=>{if(e.key==='ArrowRight')bookBus.next();if(e.key==='ArrowLeft')bookBus.prev();if(e.key==='Escape')closePanel();};
+    const gesture=(e:Event)=>{const a=(e as CustomEvent<GestureAction>).detail;if(a.type==='swipe'&&a.dx){a.dx<0?bookBus.next():bookBus.prev();}};
+    window.addEventListener('keydown',key);window.addEventListener('twi-gesture',gesture);
+    return()=>{window.removeEventListener('keydown',key);window.removeEventListener('twi-gesture',gesture);};
+  },[closePanel]);
   if (!book) return null;
   return (
     <>
-      <BookExperience bookId={book.id} />
       <div className="book-bar" data-testid="book-bar">
         <span className="book-title">{book.title}</span>
         <button data-testid="book3d-prev" onClick={() => bookBus.prev()} aria-label="Previous page">
@@ -133,7 +140,7 @@ function BookOverlay() {
         </button>
         <button
           data-testid="book3d-reader"
-          onClick={() => useStore.getState().openPanel("book", book.id)}
+          onClick={() => useStore.setState({ bookReader: true })}
         >
           Open in reader
         </button>
@@ -146,6 +153,8 @@ function BookOverlay() {
 function Panels() {
   const panel = useStore((s) => s.panel);
   const refId = useStore((s) => s.refId);
+  const bookReader = useStore(s=>s.bookReader);
+  const zone=useStore(s=>s.zone);
   if (!panel) return null;
   let body: React.ReactNode = null;
   if (panel === "welcome") body = <WelcomePanel />;
@@ -153,12 +162,13 @@ function Panels() {
   else if (panel === "controls") body = <ControlsHelp />;
   else if (panel === "story") body = <MeetShruti />;
   else if (panel === "exhibit") body = <ExhibitPanel id={refId || ""} />;
-  else if (panel === "book" && isTouch) body = <BookPanel id={refId || ""} />;
+  else if (panel === "book" && bookReader) body = <BookPanel key={refId} id={refId || ""} />;
   else if (panel === "poems") body = <PoemsPanel />;
   else if (panel === "reading") body = <ReadingPanel />;
-  else if (panel === "soundtrack") body = <SoundtrackPanel />;
+  else if (panel === "soundtrack") body = <SoundtrackPlayer />;
   else if (panel === "note") body = <NotePanel id={refId || ""} />;
   else if (panel === "guestbook") body = <GuestbookPanel />;
+  else if(panel==='catalogue')body=<article className="panel-body"><span className="chapter-mark">{zone==='library'?'THE LIVING ARCHIVES':'GALLERY OF CREATIONS'}</span><h2>{zone==='library'?'Choose a book':'Explore the exhibits'}</h2><div className="destination-list">{zone==='library'?books.map(b=><button key={b.id} onClick={()=>useStore.getState().openPanel('book',b.id)}>{b.title} <span>Open →</span></button>):projects.map(p=><button key={p.id} onClick={()=>useStore.getState().openPanel('exhibit',p.id)}>{p.name} <span>View →</span></button>)}</div></article>;
   if (!body) return null;
   return (
     <Dialog wide={panel === "atlas"}>
@@ -176,6 +186,9 @@ export default function App() {
   const panel = useStore((s) => s.panel);
   const fading = useStore((s) => s.fading);
   const gestures = useStore((s) => s.gestures);
+  const bookReader = useStore(s=>s.bookReader);
+  const refId = useStore(s=>s.refId);
+  const journey = useStore(s=>s.journey);
 
   useInteractKey();
 
@@ -214,7 +227,7 @@ export default function App() {
   // guided narration scripts
   const lastSeq = useRef("");
   useEffect(() => {
-    if (phase !== "world") return;
+    if (phase !== "world" || journey) { narrator.stop(); lastSeq.current=""; return; }
     if (!guided) {
       narrator.stop();
       useStore.setState({ caption: "" });
@@ -232,12 +245,10 @@ export default function App() {
     }
     if (key !== lastSeq.current) {
       lastSeq.current = key;
-      import("./data/narration").then(({ narrationScripts }) => {
-        const lines = narrationScripts[key] || [];
-        if (lines.length) narrator.play(key, lines);
-      });
+      const lines=narrationScripts[key]||[];
+      if(lines.length)narrator.play(key,lines);
     }
-  }, [guided, panel, world, zone, phase]);
+  }, [guided, panel, world, zone, phase, journey]);
 
   // keyboard: M / Esc
   useEffect(() => {
@@ -278,7 +289,7 @@ export default function App() {
               <Performance active={!panel} />
               {phase === "world" && <WorldRoot />}
               <CameraRig />
-              {panel === "book" && !isTouch && <BookOverlay />}
+              {panel === "book" && !bookReader && refId && <BookExperience key={refId} bookId={refId} />}
             </Suspense>
           </Canvas>
         </SceneError>
@@ -295,6 +306,7 @@ export default function App() {
           <HUD />
           <NarrationBar />
           <Panels />
+          {panel === 'book' && !bookReader && <BookOverlay />}
           {gestures && <GestureControl />}
         </>
       )}
