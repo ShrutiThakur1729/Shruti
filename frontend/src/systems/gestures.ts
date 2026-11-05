@@ -24,10 +24,10 @@ export async function startGestures(video:HTMLVideoElement,onFrame:(f:GestureFra
   if(video.readyState<2||video.currentTime===lastVideo||now-lastFrame<45)return;
   lastVideo=video.currentTime;lastFrame=now;
   const s=useStore.getState(), nextContext=`${s.phase}/${s.world}/${s.zone}/${s.panel}/${!!s.journey}`;
-  if(context!==nextContext){reset();context=nextContext;calibration=0;}
+  if(context!==nextContext){reset();context=nextContext;}
   let detected; try {detected=hands.detectForVideo(video,now);}catch{reset();return;}
   const lm=detected.landmarks[0];
-  if(!lm){reset();calibration=0;onFrame({hand:false,pinch:false,walking:false,x:.5,y:.5,calibrating:0,center:null});return;}
+  if(!lm){reset();if(now-lastUi>250){lastUi=now;onFrame({hand:false,pinch:false,walking:false,x:.5,y:.5,calibrating:calibration<12?calibration/12:null,center:null});}return;}
   const x=1-lm[9].x,y=lm[9].y;
   const size=Math.max(.04,Math.hypot(lm[0].x-lm[9].x,lm[0].y-lm[9].y));
   const pinch=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y)/size;
