@@ -270,7 +270,6 @@ export default function App() {
   useEffect(() => {
     if (phase !== "landing") {
       audio.init();
-      audio.startTheme();
     }
   }, [phase]);
 
