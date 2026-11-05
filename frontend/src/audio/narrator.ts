@@ -41,9 +41,6 @@ class Narrator {
     this.cb.onLine(line, this.index);
     this.cb.onState(true);
     if (this.paused) return;
-    if (audio.themePlaying || true) {
-      /* ducking handled inside engine */
-    }
     const ok = await audio.narrate(line);
     if (token !== this.token || !this.playing) return;
     if (!ok) {
@@ -51,6 +48,8 @@ class Narrator {
       await new Promise((r) => window.setTimeout(r, Math.max(2600, line.length * 62)));
       if (token !== this.token || !this.playing) return;
     }
+    while(this.paused && token===this.token) await new Promise(r=>window.setTimeout(r,80));
+    if(token!==this.token||!this.playing)return;
     this.index++;
     this.playLine(token);
   }
@@ -86,10 +85,13 @@ class Narrator {
     this.paused = false;
     audio.stopNarration();
     this.cb.onState(false);
+    this.cb.onLine('',0);
   }
 
   private finish() {
     this.playing = false;
+    audio.duck(false);
+    this.cb.onLine('',0);
     this.cb.onState(false);
     this.cb.onDone();
   }

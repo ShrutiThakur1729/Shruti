@@ -93,13 +93,19 @@ class AudioEngine {
   private ducked = false;
   magicShopActive = false;
   private footTimer: number | null = null;
+  private narrationAbort: AbortController | null = null;
+  private narrationResolve: (()=>void) | null = null;
+  private narrationSerial = 0;
+  private narrationPaused = false;
+  private worldTimer: number | null = null;
 
   get supported() {
     return typeof window !== "undefined" && "AudioContext" in window;
   }
 
   init() {
-    if (this.ctx || !this.supported) return;
+    if(this.ctx){void this.ctx.resume();return;}
+    if (!this.supported) return;
     const Ctx = window.AudioContext;
     this.ctx = new Ctx();
     this.master = this.ctx.createGain();
@@ -118,8 +124,9 @@ class AudioEngine {
 
   private async detectTheme() {
     try {
-      const res = await fetch("audio/website-theme.m4a", { method: "HEAD" });
-      this.themeAvailable = res.ok;
+      const res = await fetch("/audio/website-theme.m4a", { method: "HEAD" });
+      this.themeAvailable = res.ok && !!res.headers.get('content-type')?.startsWith('audio/');
+      if(this.themeAvailable)this.startTheme();
     } catch {
       this.themeAvailable = false;
     }
@@ -133,14 +140,15 @@ class AudioEngine {
     this.master.gain.setTargetAtTime(muted ? 0 : master, now, 0.08);
     if (this.musicBus) {
       this.musicBus.gain.setTargetAtTime(
-        music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
+        this.magicShopActive ? 0 : music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
         now,
         0.2
       );
     }
     if (this.sfxBus) this.sfxBus.gain.setTargetAtTime(sfx, now, 0.08);
     if (this.narrationEl) this.narrationEl.volume = Math.min(1, this.settings.voice * (muted ? 0 : master));
-    if (this.themeEl) this.themeEl.volume = Math.min(1, music * (muted ? 0 : master) * 1.2);
+    if (this.themeEl) this.themeEl.volume = Math.min(1, music * (muted ? 0 : master) * (this.ducked ? .25 : 1.2));
+    if(this.ambientLayer)this.ambientLayer.gain.setTargetAtTime(sfx,now,.1);
   }
 
   setSettings(s: AudioSettings) {
@@ -152,6 +160,7 @@ class AudioEngine {
   setWorld(world: WorldId) {
     if (this.world === world && this.musicTimer) return;
     this.world = world;
+    if(this.worldTimer)window.clearTimeout(this.worldTimer);
     this.stopProceduralMusic();
     this.stopAmbient();
     if (this.themePlaying) {
@@ -162,19 +171,22 @@ class AudioEngine {
     if (!this.ctx || !this.musicBus) return;
     const fadeOut = this.ctx.currentTime;
     this.musicBus.gain.setTargetAtTime(0, fadeOut, 0.4);
-    window.setTimeout(() => {
+    this.worldTimer = window.setTimeout(() => {
+      this.worldTimer=null;
       this.startProceduralMusic();
-      this.startAmbient(world);
+      if(!this.magicShopActive)this.startAmbient(this.world);
     }, 900);
   }
 
   startTheme() {
     if (!this.themeAvailable || this.themePlaying) return;
-    this.themeEl = new Audio("audio/website-theme.m4a");
+    this.themeEl = new Audio("/audio/website-theme.m4a");
     this.themeEl.loop = true;
     this.themeEl.addEventListener("ended", () => (this.themePlaying = false));
     this.themeEl.play().then(() => {
       this.themePlaying = true;
+      this.stopProceduralMusic();
+      if(this.ctx&&this.musicBus)this.musicBus.gain.setTargetAtTime(0,this.ctx.currentTime,.3);
       this.applyVolumes();
     }).catch(() => {});
   }
@@ -194,11 +206,12 @@ class AudioEngine {
   }
 
   private startProceduralMusic() {
+    this.stopProceduralMusic();
     if (!this.ctx || !this.musicBus) return;
     this.chordIndex = 0;
     const fade = this.ctx.currentTime;
     this.musicBus.gain.setTargetAtTime(
-      this.settings.music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
+      this.magicShopActive ? 0 : this.settings.music * this.musicGainTarget * (this.ducked ? 0.22 : 1),
       fade + 0.05,
       0.8
     );
@@ -264,7 +277,7 @@ class AudioEngine {
     const ctx = this.ctx;
     const layer = ctx.createGain();
     layer.gain.setValueAtTime(0, ctx.currentTime);
-    layer.gain.linearRampToValueAtTime(1, ctx.currentTime + 3);
+    layer.gain.linearRampToValueAtTime(this.settings.sfx, ctx.currentTime + 3);
     layer.connect(this.master);
     this.ambientLayer = layer;
     const mkNoise = (filterType: BiquadFilterType, freq: number, gainVal: number, lfoFreq: number, lfoDepth: number, q = 1) => {
@@ -553,7 +566,7 @@ class AudioEngine {
     this.musicBus.gain.setTargetAtTime(
       this.settings.music *
         this.musicGainTarget *
-        (on ? 0.22 : 1) *
+        (this.magicShopActive ? 0 : on ? 0.22 : 1) *
         (this.themePlaying ? 1 : 1),
       this.ctx.currentTime,
       0.3
@@ -565,6 +578,7 @@ class AudioEngine {
   }
 
   pauseForTrack() {
+    if(this.magicShopActive)return;
     this.magicShopActive = true;
     this.pauseTheme();
     if (this.ctx && this.musicBus) {
@@ -574,57 +588,72 @@ class AudioEngine {
   }
 
   resumeFromTrack() {
+    if(!this.magicShopActive)return;
     this.magicShopActive = false;
     this.resumeTheme();
     if (this.ctx && this.musicBus) {
       this.musicBus.gain.setTargetAtTime(
-        this.settings.music * this.musicGainTarget,
+        this.settings.music * this.musicGainTarget * (this.ducked ? .22 : 1),
         this.ctx.currentTime,
         0.8
       );
     }
-    this.startAmbient(this.world);
+    this.stopAmbient(); this.startAmbient(this.world);
   }
 
   async narrate(text: string): Promise<boolean> {
     this.stopNarration();
+    const serial=this.narrationSerial;
     if (!BACKEND) return false;
+    const controller=new AbortController();this.narrationAbort=controller;
     try {
       const res = await fetch(`${BACKEND}/api/narrate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
+        signal: controller.signal,
       });
       if (!res.ok) return false;
       const blob = await res.blob();
+      if(serial!==this.narrationSerial)return false;
       const url = URL.createObjectURL(blob);
       const el = new Audio(url);
       el.volume = Math.min(1, this.settings.voice * (this.settings.muted ? 0 : this.settings.master));
       this.narrationEl = el;
       this.duck(true);
       await new Promise<void>((resolve) => {
+        this.narrationResolve=resolve;
         el.onended = () => resolve();
         el.onerror = () => resolve();
-        el.play().catch(() => resolve());
+        if(!this.narrationPaused)el.play().catch(() => resolve());
       });
       URL.revokeObjectURL(url);
+      if(serial!==this.narrationSerial)return false;
       this.narrationEl = null;
+      this.narrationResolve=null;
+      this.duck(false);
       return true;
     } catch {
-      this.narrationEl = null;
+      if(serial===this.narrationSerial){this.narrationEl = null;this.duck(false);}
       return false;
     }
   }
 
   pauseNarration() {
+    this.narrationPaused=true;
     this.narrationEl?.pause();
   }
 
   resumeNarration() {
+    this.narrationPaused=false;
     this.narrationEl?.play().catch(() => {});
   }
 
   stopNarration() {
+    this.narrationPaused=false;
+    this.narrationSerial++;
+    this.narrationAbort?.abort(); this.narrationAbort=null;
+    this.narrationResolve?.();this.narrationResolve=null;
     if (this.narrationEl) {
       this.narrationEl.onended = null;
       this.narrationEl.pause();
