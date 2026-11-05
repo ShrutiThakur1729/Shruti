@@ -18,6 +18,7 @@ export type PanelId =
   | "soundtrack"
   | "note"
   | "guestbook"
+  | "catalogue"
   | null;
 
 export type AudioSettings = {
@@ -91,6 +92,8 @@ interface WorldState {
   fading: boolean;
   themeReady: boolean;
   gestures: boolean;
+  bookReader: boolean;
+  bookClosing: boolean;
 
   set: (partial: Partial<WorldState>) => void;
   openPanel: (panel: PanelId, refId?: string | null) => void;
@@ -123,17 +126,23 @@ export const useStore = create<WorldState>((set, get) => ({
   fading: false,
   themeReady: false,
   gestures: false,
+  bookReader: isTouch,
+  bookClosing: false,
 
   set: (partial) => set(partial),
 
   openPanel: (panel, refId = null) => {
     document.exitPointerLock?.();
-    set({ panel, refId });
+    set({ panel, refId, bookReader: isTouch, bookClosing: false });
   },
 
-  closePanel: () => set({ panel: null, refId: null }),
+  closePanel: () => {
+    const s=get();
+    if(s.panel==='book'&&!s.bookReader){set({bookClosing:true});return;}
+    set({ panel: null, refId: null, bookClosing:false });
+  },
 
-  enter: (guided) => set({ phase: "world", entered: true, guided, panel: "welcome" }),
+  enter: (guided) => set({ phase: "world", entered: true, guided, panel: "welcome", caption: "Hello World. Welcome to a little universe called Shruti." }),
 
   travelTo: (world, view) =>
     set(() => ({
@@ -152,6 +161,8 @@ export const useStore = create<WorldState>((set, get) => ({
   },
 
   setZone: (zone, at) => {
+    if(zone==='gallery')at={position:[-39,8.55,-32.5],lookAt:[-39,9,-43]};
+    if(zone==='library')at={position:[39,8.55,-32.5],lookAt:[39,9,-43]};
     set({ zone, panel: null, refId: null, fading: true });
     window.dispatchEvent(
       new CustomEvent("twi-teleport", { detail: at })
