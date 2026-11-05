@@ -1,7 +1,21 @@
 [build]
   base = "frontend"
   command = "yarn build"
-  publish = "frontend/dist"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  YARN_VERSION = "1.22.22"
+  YARN_FLAGS = "--frozen-lockfile"
+
+[functions]
+  directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/contact"
+  to = "/.netlify/functions/contact"
+  status = 200
+  force = true
 
 [[redirects]]
   from = "/*"
