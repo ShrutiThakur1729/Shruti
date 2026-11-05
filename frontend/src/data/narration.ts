@@ -9,7 +9,7 @@ export const narrationScripts: Record<string, string[]> = {
     "Every story begins somewhere. This valley is called The First Hello — welcome to The World Inside.",
     "Follow the stone path, beneath the trees and through the old gateway. There is time to look around.",
     "Somewhere past the bridge, an old journal waits on a pedestal — it will tell you who Shruti is.",
-    "She is an Information Technology student with Honors in Artificial Intelligence and Machine Learning, from Thane, Maharashtra.",
+    "She is an Information Technology student with Honors in Artificial Intelligence and Machine Learning.",
     "When you are ready, open the atlas and fly towards the castle on the hill.",
   ],
   castle: [

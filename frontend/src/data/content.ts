@@ -1,7 +1,6 @@
 export const identity = {
   name: "Shruti Thakur",
   shortName: "Shruti",
-  location: "Thane, Maharashtra",
   email: "sthakur.shruti@gmail.com",
   formRecipient: "1729.shruti@gmail.com",
   github: "https://github.com/ShrutiThakur1729",
@@ -20,7 +19,6 @@ export const professionalSummary =
 export const education = [
   {
     institution: "A. P. Shah Institute of Technology",
-    location: "Thane, Maharashtra",
     qualification: "B.E. in Information Technology",
     detail: "Honors in Artificial Intelligence & Machine Learning",
     grade: "CGPA 9.35 (Semester V)",
@@ -231,7 +229,7 @@ export const books: Book[] = [
         heading: "What I do",
         body: [
           professionalSummary,
-          "Based in Thane, Maharashtra, studying at A. P. Shah Institute of Technology.",
+          "Studying at A. P. Shah Institute of Technology.",
         ],
       },
       {
@@ -253,7 +251,7 @@ export const books: Book[] = [
         heading: "A. P. Shah Institute of Technology",
         body: [
           "B.E. in Information Technology, with Honors in Artificial Intelligence & Machine Learning.",
-          "CGPA 9.35 (Semester V) · Expected graduation May 2027 · Thane, Maharashtra.",
+          "CGPA 9.35 (Semester V) · Expected graduation May 2027.",
         ],
       },
       {

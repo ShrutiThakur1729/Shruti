@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { worlds, getWorld, atlasPoint, openDoorMapPoint, type WorldId } from "../data/worlds";
 import { useStore } from "../state/store";
 import { audio } from "../audio/AudioEngine";
+import { views } from "../data/views";
 
 export default function Atlas() {
   const current = useStore((s) => s.world);
@@ -189,6 +190,24 @@ export default function Atlas() {
         >
           {selected === current ? (zone ? "Step outside first" : "You are here") : "Travel Here"} <span aria-hidden>↗</span>
         </button>
+        <div className="place-list" data-testid="atlas-places">
+          <p className="eyebrow">FLY TO A PLACE IN {destination.name.toUpperCase()}</p>
+          {views
+            .filter((v) => v.world === selected)
+            .map((v) => (
+              <button
+                key={v.id}
+                data-testid={`atlas-fly-${v.id}`}
+                onClick={() => {
+                  audio.playSfx("select");
+                  travelTo(selected, v);
+                }}
+              >
+                {v.name}
+                <span aria-hidden>{v.zone ? "⌂" : "↗"}</span>
+              </button>
+            ))}
+        </div>
         <div className="destination-list">
           {worlds.map((w) => (
             <button

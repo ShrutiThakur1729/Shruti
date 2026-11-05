@@ -1366,3 +1366,27 @@ textarea:focus-visible,
 .mod-list li small { color: var(--ivory-dim); }
 .mod-list li div { display: flex; gap: 8px; margin-top: 10px; }
 .mod-back { color: var(--gold-bright); }
+
+/* ————— Atlas places ————— */
+.place-list { margin-top: 1.2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
+.place-list .eyebrow { grid-column: 1 / -1; margin: 0 0 4px; }
+.place-list button {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; text-align: left;
+  border: 1px solid var(--gold-line); background: rgba(201, 167, 92, 0.06); color: var(--ivory);
+  padding: 0.5em 0.8em; font-size: 0.92rem; border-radius: 3px; cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+.place-list button:hover { background: rgba(201, 167, 92, 0.2); border-color: var(--gold); transform: translateY(-1px); }
+.place-list button span { color: var(--gold-bright); }
+
+/* ————— Mobile header ————— */
+@media (max-width: 720px) {
+  .topbar { padding: 10px 12px; align-items: flex-start; }
+  .wordmark { letter-spacing: 0.14em; font-size: 0.66rem; gap: 6px; white-space: nowrap; }
+  .wordmark small { font-size: 0.72rem; letter-spacing: 0.04em; }
+  .controls-hint, .journey-note { display: none; }
+  .location { top: 64px; left: 14px; max-width: 220px; }
+  .location h1 { font-size: 1.5rem; }
+  .location p { font-size: 0.92rem; }
+  .gesture-widget { top: 64px; right: 10px; bottom: auto; width: 132px; padding: 6px; }
+}

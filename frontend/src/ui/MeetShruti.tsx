@@ -25,10 +25,6 @@ export default function MeetShruti() {
           <dd>{identity.name}</dd>
         </div>
         <div>
-          <dt>Home</dt>
-          <dd>{identity.location}</dd>
-        </div>
-        <div>
           <dt>Degree</dt>
           <dd>B.E. Information Technology</dd>
         </div>

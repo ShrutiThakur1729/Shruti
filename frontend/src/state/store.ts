@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { audio } from "../audio/AudioEngine";
 import { findInteraction } from "../data/interactions";
 import { getWorld } from "../data/worlds";
+import type { View } from "../data/views";
 
 export type WorldId = "hello" | "castle" | "garden";
 export type Zone = "hall" | "gallery" | "library";
@@ -77,7 +78,7 @@ interface WorldState {
   guided: boolean;
   world: WorldId;
   zone: Zone | null;
-  journey: { to: WorldId; serial: number } | null;
+  journey: { to: WorldId; serial: number; view?: View } | null;
   panel: PanelId;
   refId: string | null;
   nearby: Nearby;
@@ -95,7 +96,7 @@ interface WorldState {
   openPanel: (panel: PanelId, refId?: string | null) => void;
   closePanel: () => void;
   enter: (guided: boolean) => void;
-  travelTo: (world: WorldId) => void;
+  travelTo: (world: WorldId, view?: View) => void;
   arrive: () => void;
   setZone: (zone: Zone | null, at: { position: [number, number, number]; lookAt: [number, number, number] }) => void;
   setAudio: (partial: Partial<AudioSettings>) => void;
@@ -134,21 +135,21 @@ export const useStore = create<WorldState>((set, get) => ({
 
   enter: (guided) => set({ phase: "world", entered: true, guided, panel: "welcome" }),
 
-  travelTo: (world) =>
-    set((s) => ({
+  travelTo: (world, view) =>
+    set(() => ({
       panel: null,
       refId: null,
       zone: null,
-      journey: { to: world, serial: Date.now() },
+      journey: { to: world, serial: Date.now(), view },
       narrating: false,
       caption: "",
     })),
 
-  arrive: () =>
-    set((s) => {
-      const to = s.journey?.to;
-      return to ? { world: to, journey: null } : { journey: null };
-    }),
+  arrive: () => {
+    const j = get().journey;
+    set(j ? { world: j.to, journey: null } : { journey: null });
+    if (j?.view?.zone) get().setZone(j.view.zone, { position: j.view.position, lookAt: j.view.lookAt });
+  },
 
   setZone: (zone, at) => {
     set({ zone, panel: null, refId: null, fading: true });

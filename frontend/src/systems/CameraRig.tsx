@@ -17,6 +17,8 @@ const ZONE_ENTRY: Record<string, { position: Point; lookAt: Point }> = {
   library: { position: [0, 2.2, 7], lookAt: [0, 3, -18] },
 };
 
+const CASTLE_DOORSTEP: { position: Point; lookAt: Point } = { position: [150, 6, -198], lookAt: [150, 10, -214] };
+
 export default function CameraRig() {
   const { camera, gl } = useThree();
   const angles = useRef(new THREE.Euler(0, 0, 0, "YXZ"));
@@ -25,8 +27,10 @@ export default function CameraRig() {
     start: Point;
     time: number;
     duration: number;
-    destination: WorldId;
+    end: Point;
+    lookAt: Point;
   } | null>(null);
+  const landing = useRef<{ position: Point; lookAt: Point } | null>(null);
   const moving = useRef(false);
   const quat = useRef(new THREE.Quaternion());
 
@@ -46,8 +50,10 @@ export default function CameraRig() {
   useEffect(() => {
     if (zone) return;
     const w = getWorld(world);
-    camera.position.fromArray(w.arrival);
-    camera.lookAt(...w.lookAt);
+    const at = landing.current ?? { position: w.arrival, lookAt: w.lookAt };
+    landing.current = null;
+    camera.position.fromArray(at.position);
+    camera.lookAt(...at.lookAt);
     angles.current.setFromQuaternion(camera.quaternion, "YXZ");
     quat.current.copy(camera.quaternion);
   }, [world, camera]);
@@ -72,11 +78,18 @@ export default function CameraRig() {
   useEffect(() => {
     if (!journey) return;
     const dest = getWorld(journey.to);
+    const v = journey.view;
+    const target = !v
+      ? { position: dest.arrival, lookAt: dest.lookAt }
+      : v.zone
+        ? CASTLE_DOORSTEP
+        : { position: v.position, lookAt: v.lookAt };
     travel.current = {
       start: camera.position.toArray() as Point,
       time: 0,
-      duration: flightDuration(camera.position.toArray() as Point, dest.arrival),
-      destination: journey.to,
+      duration: flightDuration(camera.position.toArray() as Point, target.position),
+      end: target.position,
+      lookAt: target.lookAt,
     };
     velocity.current.set(0, 0, 0);
     audio.playSfx("travel");
@@ -121,8 +134,7 @@ export default function CameraRig() {
     if (flight && st.journey) {
       flight.time += dt;
       const t = Math.min(1, flight.time / flight.duration);
-      const dest = getWorld(flight.destination);
-      const p = flightPoint(flight.start, dest.arrival, t);
+      const p = flightPoint(flight.start, flight.end, t);
       const k = input.keys;
       const vertical =
         ((k.has("Space") ? 1 : 0) - (k.has("ControlLeft") ? 1 : 0)) * dt * 10;
@@ -132,28 +144,26 @@ export default function CameraRig() {
         12
       );
       camera.position.fromArray(p);
-      const ahead = flightPoint(flight.start, dest.arrival, Math.min(1, t + 0.03));
+      const ahead = flightPoint(flight.start, flight.end, Math.min(1, t + 0.03));
       camera.lookAt(...ahead);
       camera.rotateZ(Math.sin(t * Math.PI * 2) * 0.03);
-      const target = new THREE.Quaternion().setFromEuler(
-        new THREE.Euler(
-          0,
-          Math.atan2(
-            dest.lookAt[0] - dest.arrival[0],
-            dest.lookAt[2] - dest.arrival[2]
-          ),
-          0,
-          "YXZ"
+      const target = new THREE.Quaternion().setFromRotationMatrix(
+        new THREE.Matrix4().lookAt(
+          new THREE.Vector3(...flight.end),
+          new THREE.Vector3(...flight.lookAt),
+          new THREE.Vector3(0, 1, 0)
         )
       );
       camera.quaternion.slerp(target, Math.max(0, (t - 0.8) / 0.2));
       if (t >= 1) {
-        camera.position.fromArray(dest.arrival);
-        camera.lookAt(...dest.lookAt);
+        camera.position.fromArray(flight.end);
+        camera.lookAt(...flight.lookAt);
         angles.current.setFromQuaternion(camera.quaternion, "YXZ");
         quat.current.copy(camera.quaternion);
+        landing.current = { position: flight.end, lookAt: flight.lookAt };
         travel.current = null;
         st.arrive();
+        if (st.journey && (st.journey.to === st.world || st.journey.view?.zone)) landing.current = null;
       }
       return;
     }
