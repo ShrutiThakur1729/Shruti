@@ -7,8 +7,9 @@ const MODEL =
   "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
 const ORDER: WorldId[] = ["hello", "castle", "garden"];
 const HOLD_MS = 450;
-const DEADZONE = 0.09;
-const LOOK_SPEED = 2.6;
+const DEADZONE = 0.14;
+const LOOK_SPEED = 2.2;
+const CALIB_FRAMES = 36;
 
 export type GestureFrame = {
   hand: boolean;
@@ -16,6 +17,8 @@ export type GestureFrame = {
   walking: boolean;
   x: number;
   y: number;
+  calibrating: number | null;
+  center: { x: number; y: number } | null;
   event?: string;
 };
 
@@ -25,8 +28,7 @@ function swipeWorld(direction: 1 | -1) {
   const st = useStore.getState();
   if (st.phase !== "world" || st.journey) return false;
   const i = ORDER.indexOf(st.world);
-  const next = ORDER[(i + direction + ORDER.length) % ORDER.length];
-  st.travelTo(next);
+  st.travelTo(ORDER[(i + direction + ORDER.length) % ORDER.length]);
   return true;
 }
 
@@ -77,6 +79,9 @@ export async function startGestures(
   let walking = false;
   let cooldownUntil = 0;
   let history: { t: number; x: number }[] = [];
+  let calib: { x: number; y: number } | null = null;
+  let samples: { x: number; y: number }[] = [];
+  let size = 0.2;
 
   const stopWalk = () => {
     if (walking) {
@@ -86,6 +91,18 @@ export async function startGestures(
     }
     walking = false;
   };
+
+  const frame = (hand: boolean, x: number, y: number, event?: string) =>
+    onFrame({
+      hand,
+      pinch: pinching,
+      walking,
+      x,
+      y,
+      calibrating: calib ? null : samples.length / CALIB_FRAMES,
+      center: calib,
+      event,
+    });
 
   const loop = () => {
     raf = requestAnimationFrame(loop);
@@ -99,19 +116,33 @@ export async function startGestures(
       stopWalk();
       pinching = false;
       history = [];
-      onFrame({ hand: false, pinch: false, walking: false, x: 0.5, y: 0.5 });
+      if (!calib) samples = [];
+      frame(false, 0.5, 0.5);
       return;
     }
     const palmX = 1 - lm[9].x;
     const palmY = lm[9].y;
-    const ratio = dist(lm[4], lm[8]) / Math.max(0.01, dist(lm[0], lm[9]));
+    size += (Math.max(0.04, dist(lm[0], lm[9])) - size) * 0.3;
+
+    if (!calib) {
+      const mean = samples.reduce((m, s) => ({ x: m.x + s.x / samples.length, y: m.y + s.y / samples.length }), { x: 0, y: 0 });
+      if (samples.length && Math.hypot(palmX - mean.x, palmY - mean.y) > size * 0.5) samples = [];
+      samples.push({ x: palmX, y: palmY });
+      if (samples.length >= CALIB_FRAMES) {
+        calib = { x: mean.x, y: mean.y };
+        frame(true, palmX, palmY, "Calibrated");
+      } else frame(true, palmX, palmY);
+      return;
+    }
+
+    const ratio = dist(lm[4], lm[8]) / size;
     const isPinch = pinching ? ratio < 0.5 : ratio < 0.32;
     let event: string | undefined;
 
     history.push({ t: now, x: palmX });
     history = history.filter((h) => now - h.t < 380);
     const swing = palmX - history[0].x;
-    if (!isPinch && now > cooldownUntil && Math.abs(swing) > 0.3) {
+    if (!isPinch && now > cooldownUntil && Math.abs(swing) > Math.max(0.22, size * 1.6)) {
       if (swipeWorld(swing > 0 ? 1 : -1)) event = swing > 0 ? "Next world" : "Previous world";
       cooldownUntil = now + 1800;
       history = [];
@@ -131,22 +162,30 @@ export async function startGestures(
     pinching = isPinch;
 
     if (now > cooldownUntil - 1200) {
-      const ox = palmX - 0.5;
-      const oy = palmY - 0.5;
+      const reach = size * 2.5;
+      const ox = Math.max(-1, Math.min(1, (palmX - calib.x) / reach));
+      const oy = Math.max(-1, Math.min(1, (palmY - calib.y) / reach));
       const ex = Math.abs(ox) > DEADZONE ? ox - Math.sign(ox) * DEADZONE : 0;
       const ey = Math.abs(oy) > DEADZONE ? oy - Math.sign(oy) * DEADZONE : 0;
-      input.look.dx -= ex * LOOK_SPEED * dt;
-      input.look.dy -= ey * LOOK_SPEED * dt;
+      input.look.dx -= ex * Math.abs(ex) * LOOK_SPEED * dt * 1.6;
+      input.look.dy -= ey * Math.abs(ey) * LOOK_SPEED * dt * 1.2;
     }
-    onFrame({ hand: true, pinch: isPinch, walking, x: palmX, y: palmY, event });
+    frame(true, palmX, palmY, event);
   };
   loop();
 
-  return () => {
-    cancelAnimationFrame(raf);
-    stopWalk();
-    hands.close();
-    stream.getTracks().forEach((t) => t.stop());
-    video.srcObject = null;
+  return {
+    stop: () => {
+      cancelAnimationFrame(raf);
+      stopWalk();
+      hands.close();
+      stream.getTracks().forEach((t) => t.stop());
+      video.srcObject = null;
+    },
+    recalibrate: () => {
+      calib = null;
+      samples = [];
+      stopWalk();
+    },
   };
 }

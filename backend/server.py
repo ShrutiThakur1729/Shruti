@@ -136,14 +136,19 @@ class GuestNote(BaseDocument):
     name: str
     message: str
     status: str = 'pending'
+    color: str = 'gold'
     created_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
 
 
+LANTERN_COLORS = {'gold', 'rose', 'jade', 'sky', 'violet', 'ember'}
+
+
 class GuestNoteIn(BaseModel):
     name: str
     message: str
+    color: str = 'gold'
 
 
 def require_admin(key: Optional[str]):
@@ -152,7 +157,7 @@ def require_admin(key: Optional[str]):
 
 
 def note_out(n: GuestNote) -> dict:
-    return {'id': n.id, 'name': n.name, 'message': n.message,
+    return {'id': n.id, 'name': n.name, 'message': n.message, 'color': n.color,
             'status': n.status, 'created_at': n.created_at}
 
 
@@ -168,7 +173,9 @@ async def submit_guest_note(payload: GuestNoteIn):
         raise HTTPException(status_code=400, detail='Links are not allowed in the garden.')
     if has_blocked_word(name) or has_blocked_word(message):
         raise HTTPException(status_code=400, detail='Please keep the garden kind — try different words.')
-    note = GuestNote(name=name, message=message)
+    if payload.color not in LANTERN_COLORS:
+        raise HTTPException(status_code=400, detail='Please pick one of the lantern colours.')
+    note = GuestNote(name=name, message=message, color=payload.color)
     result = await db['guestbook'].insert_one(note.to_mongo())
     return {'ok': True, 'id': str(result.inserted_id), 'status': 'pending'}
 

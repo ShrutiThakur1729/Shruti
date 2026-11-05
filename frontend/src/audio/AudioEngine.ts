@@ -256,108 +256,185 @@ class AudioEngine {
     }
   }
 
-  /* ————— ambient layers ————— */
+  /* ————— ambient soundscapes (crossfaded per world) ————— */
+  private ambientLayer: GainNode | null = null;
+
   private startAmbient(world: WorldId) {
     if (!this.ctx || !this.noiseBuffer || !this.master) return;
-    const mkNoise = (
-      filterType: BiquadFilterType,
-      freq: number,
-      gainVal: number,
-      lfoFreq: number,
-      lfoDepth: number
-    ) => {
-      const src = this.ctx!.createBufferSource();
+    const ctx = this.ctx;
+    const layer = ctx.createGain();
+    layer.gain.setValueAtTime(0, ctx.currentTime);
+    layer.gain.linearRampToValueAtTime(1, ctx.currentTime + 3);
+    layer.connect(this.master);
+    this.ambientLayer = layer;
+    const mkNoise = (filterType: BiquadFilterType, freq: number, gainVal: number, lfoFreq: number, lfoDepth: number, q = 1) => {
+      const src = ctx.createBufferSource();
       src.buffer = this.noiseBuffer!;
       src.loop = true;
-      const filter = this.ctx!.createBiquadFilter();
+      src.playbackRate.value = 0.9 + Math.random() * 0.2;
+      const filter = ctx.createBiquadFilter();
       filter.type = filterType;
       filter.frequency.value = freq;
-      const gain = this.ctx!.createGain();
+      filter.Q.value = q;
+      const gain = ctx.createGain();
       gain.gain.value = gainVal;
-      const lfo = this.ctx!.createOscillator();
-      const lfoGain = this.ctx!.createGain();
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
       lfo.frequency.value = lfoFreq;
       lfoGain.gain.value = lfoDepth;
       lfo.connect(lfoGain).connect(gain.gain);
-      src.connect(filter).connect(gain).connect(this.master!);
+      src.connect(filter).connect(gain).connect(layer);
       src.start();
       lfo.start();
       this.ambientSources.push(src, lfo);
     };
     if (world === "hello") {
-      mkNoise("lowpass", 380, 0.045, 0.07, 0.02); // wind through trees
-      mkNoise("bandpass", 950, 0.012, 0.23, 0.006); // distant stream
-      this.scheduleChirps(7000);
+      mkNoise("lowpass", 380, 0.045, 0.07, 0.02); // wind through the valley
+      mkNoise("bandpass", 950, 0.014, 0.23, 0.006, 0.8); // river
+      mkNoise("highpass", 3800, 0.004, 0.11, 0.003); // leaves
+      this.scheduleChirps(layer, 6000);
     } else if (world === "castle") {
-      mkNoise("lowpass", 240, 0.05, 0.05, 0.022); // deep wind around stone
+      mkNoise("lowpass", 220, 0.055, 0.04, 0.025); // deep wind around stone
+      mkNoise("bandpass", 520, 0.008, 0.09, 0.005, 2); // whistle through towers
+      this.scheduleCrackle(layer);
+      this.scheduleBell(layer, 9000);
     } else {
       mkNoise("lowpass", 320, 0.035, 0.06, 0.015); // evening breeze
-      mkNoise("bandpass", 1100, 0.02, 0.31, 0.008); // stream & waterfall
-      this.scheduleChirps(9000);
-      this.scheduleCrickets();
+      mkNoise("bandpass", 1300, 0.022, 0.31, 0.008, 0.7); // waterfall
+      mkNoise("highpass", 2600, 0.006, 0.4, 0.003); // spray
+      this.scheduleChirps(layer, 9000);
+      this.scheduleCrickets(layer);
+      this.scheduleChimes(layer, 7000);
     }
   }
 
   private stopAmbient() {
     this.ambientTimers.forEach((t) => window.clearTimeout(t));
     this.ambientTimers = [];
-    this.ambientSources.forEach((s) => {
-      try {
-        s.stop();
-      } catch {
-        /* already stopped */
-      }
-    });
+    const sources = this.ambientSources;
+    const layer = this.ambientLayer;
     this.ambientSources = [];
+    this.ambientLayer = null;
+    if (this.ctx && layer) {
+      const now = this.ctx.currentTime;
+      layer.gain.cancelScheduledValues(now);
+      layer.gain.setValueAtTime(layer.gain.value, now);
+      layer.gain.linearRampToValueAtTime(0, now + 2.5);
+    }
+    window.setTimeout(() => {
+      sources.forEach((s) => {
+        try {
+          s.stop();
+        } catch {
+          /* already stopped */
+        }
+      });
+      layer?.disconnect();
+    }, 2700);
   }
 
-  private scheduleChirps(gap: number) {
+  private tone(out: AudioNode, freq: number, start: number, peak: number, decay: number, type: OscillatorType = "sine") {
+    const osc = this.ctx!.createOscillator();
+    const gain = this.ctx!.createGain();
+    osc.type = type;
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0, start);
+    gain.gain.linearRampToValueAtTime(peak, start + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + decay);
+    osc.connect(gain).connect(out);
+    osc.start(start);
+    osc.stop(start + decay + 0.05);
+  }
+
+  private repeat(fn: () => void, delay: () => number) {
     const tick = window.setTimeout(() => {
-      if (this.ctx && this.master && !document.hidden) {
-        const t = this.ctx.currentTime;
-        const chirps = 2 + Math.floor(Math.random() * 3);
-        for (let i = 0; i < chirps; i++) {
-          const osc = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          const start = t + i * 0.22;
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(2300 + Math.random() * 900, start);
-          osc.frequency.exponentialRampToValueAtTime(3100, start + 0.09);
-          osc.frequency.exponentialRampToValueAtTime(2100, start + 0.18);
-          gain.gain.setValueAtTime(0, start);
-          gain.gain.linearRampToValueAtTime(0.016, start + 0.03);
-          gain.gain.linearRampToValueAtTime(0, start + 0.2);
-          osc.connect(gain).connect(this.master);
-          osc.start(start);
-          osc.stop(start + 0.25);
-        }
-      }
-      this.scheduleChirps(5000 + Math.random() * 9000);
-    }, gap);
+      if (this.ctx && !document.hidden) fn();
+      this.repeat(fn, delay);
+    }, delay());
     this.ambientTimers.push(tick);
   }
 
-  private scheduleCrickets() {
-    const tick = window.setTimeout(() => {
-      if (this.ctx && this.master && !document.hidden) {
-        const t = this.ctx.currentTime;
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
+  private scheduleChirps(out: AudioNode, first: number) {
+    let initial = true;
+    this.repeat(() => {
+      const t = this.ctx!.currentTime;
+      const chirps = 2 + Math.floor(Math.random() * 3);
+      for (let i = 0; i < chirps; i++) {
+        const osc = this.ctx!.createOscillator();
+        const gain = this.ctx!.createGain();
+        const start = t + i * 0.22;
         osc.type = "sine";
-        osc.frequency.value = 4200;
-        gain.gain.value = 0;
-        for (let i = 0; i < 6; i++) {
-          const s = t + i * 0.12;
-          gain.gain.setValueAtTime(0.006, s);
-          gain.gain.setValueAtTime(0, s + 0.06);
-        }
-        osc.connect(gain).connect(this.master);
-        osc.start(t);
-        osc.stop(t + 0.9);
+        osc.frequency.setValueAtTime(2300 + Math.random() * 900, start);
+        osc.frequency.exponentialRampToValueAtTime(3100, start + 0.09);
+        osc.frequency.exponentialRampToValueAtTime(2100, start + 0.18);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.016, start + 0.03);
+        gain.gain.linearRampToValueAtTime(0, start + 0.2);
+        osc.connect(gain).connect(out);
+        osc.start(start);
+        osc.stop(start + 0.25);
       }
-      this.scheduleCrickets();
-    }, 6500 + Math.random() * 7000);
-    this.ambientTimers.push(tick);
+    }, () => (initial ? ((initial = false), first) : 5000 + Math.random() * 9000));
+  }
+
+  private scheduleCrickets(out: AudioNode) {
+    this.repeat(() => {
+      const t = this.ctx!.currentTime;
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 4200;
+      gain.gain.value = 0;
+      for (let i = 0; i < 6; i++) {
+        const s = t + i * 0.12;
+        gain.gain.setValueAtTime(0.006, s);
+        gain.gain.setValueAtTime(0, s + 0.06);
+      }
+      osc.connect(gain).connect(out);
+      osc.start(t);
+      osc.stop(t + 0.9);
+    }, () => 6500 + Math.random() * 7000);
+  }
+
+  private scheduleChimes(out: AudioNode, first: number) {
+    let initial = true;
+    const notes = [72, 74, 76, 79, 81, 84];
+    this.repeat(() => {
+      const t = this.ctx!.currentTime;
+      const count = 2 + Math.floor(Math.random() * 4);
+      for (let i = 0; i < count; i++)
+        this.tone(out, midi(notes[Math.floor(Math.random() * notes.length)]), t + i * (0.18 + Math.random() * 0.3), 0.012, 2.6);
+    }, () => (initial ? ((initial = false), first) : 9000 + Math.random() * 12000));
+  }
+
+  private scheduleBell(out: AudioNode, first: number) {
+    let initial = true;
+    this.repeat(() => {
+      const t = this.ctx!.currentTime;
+      [1, 2.76, 5.4].forEach((m, i) => this.tone(out, 98 * m, t, [0.03, 0.012, 0.006][i], 5.5 - i));
+    }, () => (initial ? ((initial = false), first) : 22000 + Math.random() * 16000));
+  }
+
+  private scheduleCrackle(out: AudioNode) {
+    this.repeat(() => {
+      const ctx = this.ctx!;
+      const t = ctx.currentTime;
+      for (let i = 0; i < 4 + Math.floor(Math.random() * 6); i++) {
+        const src = ctx.createBufferSource();
+        src.buffer = this.noiseBuffer!;
+        const filter = ctx.createBiquadFilter();
+        filter.type = "bandpass";
+        filter.frequency.value = 1800 + Math.random() * 2500;
+        const gain = ctx.createGain();
+        const s = t + Math.random() * 0.8;
+        gain.gain.setValueAtTime(0, s);
+        gain.gain.linearRampToValueAtTime(0.02 + Math.random() * 0.02, s + 0.003);
+        gain.gain.exponentialRampToValueAtTime(0.0001, s + 0.04);
+        src.connect(filter).connect(gain).connect(out);
+        src.start(s, Math.random());
+        src.stop(s + 0.06);
+      }
+    }, () => 400 + Math.random() * 900);
   }
 
   /* ————— sfx ————— */

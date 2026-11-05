@@ -4,12 +4,14 @@ import * as T from "three";
 import { GARDEN, gardenGround } from "./terrain";
 import { wrapText, plaqueTexture } from "./shared/textures";
 import { Lantern } from "./shared/Props";
+import { lanternOf } from "../data/lanterns";
 
-type Note = { id: string; name: string; message: string };
+type Note = { id: string; name: string; message: string; color?: string };
 export const GUESTBOOK_SPOT: [number, number] = [-163, -120];
 const backend = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 
 function glowTexture(note: Note) {
+  const tone = lanternOf(note.color);
   const c = document.createElement("canvas");
   c.width = 640;
   c.height = 320;
@@ -28,13 +30,13 @@ function glowTexture(note: Note) {
   ctx.fillRect(0, 0, 640, 640);
   ctx.restore();
   for (const pass of [26, 8]) {
-    ctx.shadowColor = "#ffc45e";
+    ctx.shadowColor = tone.glow;
     ctx.shadowBlur = pass;
-    ctx.fillStyle = "#fff4cf";
+    ctx.fillStyle = tone.text;
     ctx.font = "italic 600 38px 'Cormorant Garamond', Georgia, serif";
     lines.forEach((l, i) => ctx.fillText(l, 320, top + i * 44));
     ctx.font = "500 24px Cinzel, Georgia, serif";
-    ctx.fillStyle = "#ffd98a";
+    ctx.fillStyle = tone.name;
     ctx.fillText(`— ${note.name}`, 320, top + lines.length * 44 + 16);
   }
   const tex = new T.CanvasTexture(c);
@@ -44,6 +46,7 @@ function glowTexture(note: Note) {
 
 function FloatingNote({ note, index }: { note: Note; index: number }) {
   const ref = useRef<T.Sprite>(null);
+  const group = useRef<T.Group>(null);
   const fade = useRef(0);
   const tex = useMemo(() => glowTexture(note), [note]);
   useEffect(() => () => tex.dispose(), [tex]);
@@ -54,17 +57,29 @@ function FloatingNote({ note, index }: { note: Note; index: number }) {
   const base = gardenGround(x, z) + 4 + ((index * 3) % 4) * 1.6;
   useFrame(({ clock }, delta) => {
     const s = ref.current;
-    if (!s) return;
+    const g = group.current;
+    if (!s || !g) return;
     const t = clock.elapsedTime + index * 1.7;
-    s.position.y = base + Math.sin(t * 0.6) * 0.35;
+    g.position.y = base + Math.sin(t * 0.6) * 0.35;
     const m = s.material as T.SpriteMaterial;
     fade.current = Math.min(1, fade.current + delta * 0.8);
     m.opacity = fade.current * (0.85 + Math.sin(t * 1.3) * 0.15);
   });
+  const tone = lanternOf(note.color);
   return (
-    <sprite ref={ref} position={[x, base, z]} scale={[5, 2.5, 1]}>
-      <spriteMaterial map={tex} transparent opacity={0} depthWrite={false} toneMapped={false} fog={false} />
-    </sprite>
+    <group ref={group} position={[x, base, z]}>
+      <sprite ref={ref} scale={[5, 2.5, 1]}>
+        <spriteMaterial map={tex} transparent opacity={0} depthWrite={false} toneMapped={false} fog={false} />
+      </sprite>
+      <mesh position={[0, -1.7, 0]}>
+        <sphereGeometry args={[0.22, 14, 10]} />
+        <meshStandardMaterial color={tone.text} emissive={tone.glow} emissiveIntensity={2.6} toneMapped={false} />
+      </mesh>
+      <mesh position={[0, -1.42, 0]}>
+        <cylinderGeometry args={[0.09, 0.12, 0.08, 8]} />
+        <meshStandardMaterial color="#3a2c1e" roughness={0.8} />
+      </mesh>
+    </group>
   );
 }
 

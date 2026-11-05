@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { lanternOf } from "../data/lanterns";
 
-type Note = { id: string; name: string; message: string; status: string; created_at: string };
+type Note = { id: string; name: string; message: string; status: string; created_at: string; color?: string };
 const backend = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 const KEY = "twi-mod-key";
 
@@ -65,7 +66,7 @@ export default function Moderation() {
         {notes.map((n) => (
           <li key={n.id} className={n.status} data-testid={`mod-note-${n.id}`}>
             <p>“{n.message}”</p>
-            <small>— {n.name} · {new Date(n.created_at).toLocaleString()} · <b>{n.status}</b></small>
+            <small><i className="mod-dot" style={{ background: lanternOf(n.color).glow }} /> — {n.name} · {new Date(n.created_at).toLocaleString()} · <b>{n.status}</b></small>
             <div>
               {n.status !== "approved" && (
                 <button className="btn-primary" data-testid={`mod-approve-${n.id}`} onClick={() => act(n.id, `/${n.id}/approve`, "POST")}>

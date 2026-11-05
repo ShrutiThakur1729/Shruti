@@ -1390,3 +1390,23 @@ textarea:focus-visible,
   .location p { font-size: 0.92rem; }
   .gesture-widget { top: 64px; right: 10px; bottom: auto; width: 132px; padding: 6px; }
 }
+
+.gesture-deadzone { inset: auto; width: 22%; aspect-ratio: 1; transform: translate(-50%, -50%); }
+.gesture-progress { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--gold-bright); box-shadow: 0 0 10px var(--gold-bright); transition: width 0.1s linear; }
+.gesture-widget.calibrating { border-color: var(--gold); }
+.gesture-off + .gesture-off { margin-top: 6px; }
+
+/* ————— Lantern colour picker ————— */
+.gb-colors { border: 0; padding: 0; margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.gb-colors legend { font-family: var(--serif-display); font-size: 0.8rem; letter-spacing: 0.08em; color: var(--gold-bright); margin-bottom: 8px; }
+.gb-colors button {
+  width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+  border: 2px solid rgba(243, 234, 214, 0.25);
+  background: radial-gradient(circle at 40% 35%, #fff 0%, var(--lantern) 45%, rgba(0, 0, 0, 0.4) 100%);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.gb-colors button:hover { transform: scale(1.1); }
+.gb-colors button.on { border-color: var(--ivory); box-shadow: 0 0 16px var(--lantern); transform: scale(1.15); }
+.gb-color-name { font-style: italic; color: var(--ivory-dim); }
+.mod-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useStore } from "../state/store";
+import { LANTERNS, type LanternColor } from "../data/lanterns";
 
 const backend = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 
 export default function GuestbookPanel() {
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
+  const [color, setColor] = useState<LanternColor>("gold");
   const [state, setState] = useState<"idle" | "sending" | "ok" | "error">("idle");
   const [error, setError] = useState("");
 
@@ -16,7 +18,7 @@ export default function GuestbookPanel() {
       const res = await fetch(`${backend}/api/guestbook`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, message }),
+        body: JSON.stringify({ name, message, color }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || "Something went wrong.");
@@ -72,6 +74,23 @@ export default function GuestbookPanel() {
           />
           <small className="gb-count" data-testid="guestbook-count">{message.length}/140</small>
         </label>
+        <fieldset className="gb-colors" data-testid="guestbook-colors">
+          <legend>Lantern colour</legend>
+          {(Object.keys(LANTERNS) as LanternColor[]).map((c) => (
+            <button
+              type="button"
+              key={c}
+              className={color === c ? "on" : ""}
+              style={{ "--lantern": LANTERNS[c].glow } as React.CSSProperties}
+              aria-pressed={color === c}
+              aria-label={LANTERNS[c].label}
+              title={LANTERNS[c].label}
+              data-testid={`guestbook-color-${c}`}
+              onClick={() => setColor(c)}
+            />
+          ))}
+          <span className="gb-color-name">{LANTERNS[color].label}</span>
+        </fieldset>
         {state === "error" && (
           <p className="od-error" role="alert" data-testid="guestbook-error">{error}</p>
         )}
