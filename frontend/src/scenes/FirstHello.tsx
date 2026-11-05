@@ -327,15 +327,15 @@ function Foliage() {
   }, []);
   return (
     <>
-      <InstancedModel url="/assets/tree.glb" height={15} placements={trees} maxDistance={28} wind />
-      <InstancedModel url="/assets/tree-lod.glb" height={15} placements={trees} minDistance={16} shadows={false} />
+      <InstancedModel url="/assets/tree-lod.glb" height={15} placements={trees} maxDistance={28} wind />
+      <InstancedModel url="/assets/tree-lod.glb" height={15} placements={trees} minDistance={28} shadows={false} />
       <InstancedModel
-        url="/assets/tree.glb"
+        url="/assets/tree-lod.glb"
         height={20}
         placements={[{ x: -19, y: groundHeight(-19, 19) - 0.3, z: 19, s: 1, r: 2.2 }]}
         wind
       />
-      <InstancedModel url="/assets/rocks.glb" height={2.2} placements={rocks} maxDistance={16} />
+      <InstancedModel url="/assets/rocks-lod.glb" height={2.2} placements={rocks} maxDistance={16} />
       <InstancedModel url="/assets/rocks-lod.glb" height={2.2} placements={rocks} minDistance={16} shadows={false} />
       <InstancedModel url="/assets/fern-lod.glb" height={0.28} placements={ferns} wind shadows={false} />
       <GroundCover />
