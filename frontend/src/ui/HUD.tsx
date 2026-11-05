@@ -12,6 +12,7 @@ export function HUD() {
   const panel = useStore((s) => s.panel);
   const guided = useStore((s) => s.guided);
   const interact = useStore((s) => s.interactNow);
+  const gestures = useStore((s) => s.gestures);
 
   const current = getWorld(world);
   const zoneName =
@@ -95,6 +96,11 @@ export function HUD() {
           <button data-testid="quick-atlas" onClick={() => useStore.getState().openPanel("atlas")}>
             World atlas <kbd>M</kbd>
           </button>
+          {!gestures && (
+            <button data-testid="quick-gestures" onClick={() => useStore.setState({ gestures: true })}>
+              Use hand gestures
+            </button>
+          )}
         </div>
       )}
 

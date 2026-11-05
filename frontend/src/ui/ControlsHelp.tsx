@@ -40,23 +40,25 @@ export default function ControlsHelp() {
         </div>
       )}
       <div className="control-grid">
-        {(isTouch
-          ? ([
-              ["Joystick", "Walk through the world"],
-              ["Drag right side", "Look around"],
-              ["✦ Button", "Interact with discoveries"],
-              ["M / Atlas", "Open the world atlas"],
-            ] as const)
-          : ([
-              ["W A S D", "Move through the world"],
-              ["Mouse", "Look around after clicking the world"],
-              ["Shift", "Walk faster"],
-              ["E / Click", "Interact with a nearby discovery"],
-              ["M", "Open or close the world atlas"],
-              ["Esc", "Release mouse / close panels"],
-              ["Space / Ctrl", "Adjust altitude during flights"],
-            ] as const)
-        ).map(([key, label]) => (
+        {[
+          ...(isTouch
+            ? [
+                ["Joystick", "Walk through the world"],
+                ["Drag right side", "Look around"],
+                ["✦ Button", "Interact with discoveries"],
+                ["M / Atlas", "Open the world atlas"],
+              ]
+            : [
+                ["W A S D", "Move through the world"],
+                ["Mouse", "Look around after clicking the world"],
+                ["Shift", "Walk faster"],
+                ["E / Click", "Interact with a nearby discovery"],
+                ["M", "Open or close the world atlas"],
+                ["Esc", "Release mouse / close panels"],
+                ["Space / Ctrl", "Adjust altitude during flights"],
+              ]),
+          ["Hand gestures", "Move your hand to look · pinch to select · hold pinch to walk · swipe to switch world"],
+        ].map(([key, label]) => (
           <div key={key}>
             <kbd>{key}</kbd>
             <span>{label}</span>

@@ -17,6 +17,7 @@ import {
 import { plaqueTexture } from "./shared/textures";
 import { useStore } from "../state/store";
 import { gardenNotes } from "../data/content";
+import GuestbookNotes from "./GuestbookNotes";
 
 function GardenTerrain() {
   return (
@@ -622,6 +623,7 @@ export default function GardenWorld() {
       <RoseArches />
       <Nooks />
       <GardenDressing />
+      <GuestbookNotes />
       <Fireflies center={[GARDEN.cx, 2, GARDEN.cz]} radius={26} />
       <DustMotes count={40} area={[60, 10, 60]} center={[GARDEN.cx, 6, GARDEN.cz]} color="#ffe9b8" size={0.03} />
     </>

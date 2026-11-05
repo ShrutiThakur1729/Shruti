@@ -14,7 +14,8 @@ export type InteractKind =
   | "poems"
   | "reading"
   | "soundtrack"
-  | "note";
+  | "note"
+  | "guestbook";
 
 export type Interaction = {
   id: string;
@@ -160,6 +161,16 @@ export const interactions: Interaction[] = [
     radius: 4,
   },
   // — Memory Garden —
+  {
+    id: "garden-guestbook",
+    world: "garden",
+    zone: null,
+    kind: "guestbook",
+    label: "The Guestbook Wall",
+    hint: "Leave a glowing note",
+    pos: [-163, -120],
+    radius: 4,
+  },
   {
     id: "garden-reading",
     world: "garden",

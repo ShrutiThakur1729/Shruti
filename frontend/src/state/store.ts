@@ -16,6 +16,7 @@ export type PanelId =
   | "reading"
   | "soundtrack"
   | "note"
+  | "guestbook"
   | null;
 
 export type AudioSettings = {
@@ -88,6 +89,7 @@ interface WorldState {
   fps: number;
   fading: boolean;
   themeReady: boolean;
+  gestures: boolean;
 
   set: (partial: Partial<WorldState>) => void;
   openPanel: (panel: PanelId, refId?: string | null) => void;
@@ -119,6 +121,7 @@ export const useStore = create<WorldState>((set, get) => ({
   fps: 0,
   fading: false,
   themeReady: false,
+  gestures: false,
 
   set: (partial) => set(partial),
 
@@ -216,6 +219,9 @@ export const useStore = create<WorldState>((set, get) => ({
         break;
       case "note":
         s.openPanel("note", it.refId);
+        break;
+      case "guestbook":
+        s.openPanel("guestbook");
         break;
     }
   },

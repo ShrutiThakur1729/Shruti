@@ -22,6 +22,8 @@ import {
   WelcomePanel,
 } from "./ui/panels";
 import OpenDoor from "./ui/OpenDoor";
+import GuestbookPanel from "./ui/GuestbookPanel";
+import GestureControl from "./ui/GestureControl";
 import { bookBus, BookExperience } from "./scenes/CastleWings";
 import { books } from "./data/content";
 
@@ -156,6 +158,7 @@ function Panels() {
   else if (panel === "reading") body = <ReadingPanel />;
   else if (panel === "soundtrack") body = <SoundtrackPanel />;
   else if (panel === "note") body = <NotePanel id={refId || ""} />;
+  else if (panel === "guestbook") body = <GuestbookPanel />;
   if (!body) return null;
   return (
     <Dialog wide={panel === "atlas"}>
@@ -172,6 +175,7 @@ export default function App() {
   const guided = useStore((s) => s.guided);
   const panel = useStore((s) => s.panel);
   const fading = useStore((s) => s.fading);
+  const gestures = useStore((s) => s.gestures);
 
   useInteractKey();
 
@@ -239,6 +243,7 @@ export default function App() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.code === "KeyM" && !e.repeat && phase === "world") {
+        if ((e.target as HTMLElement)?.closest?.("input, textarea")) return;
         e.preventDefault();
         const st = useStore.getState();
         if (st.journey) return;
@@ -290,6 +295,7 @@ export default function App() {
           <HUD />
           <NarrationBar />
           <Panels />
+          {gestures && <GestureControl />}
         </>
       )}
       {phase === "opendoor" && <OpenDoor />}
