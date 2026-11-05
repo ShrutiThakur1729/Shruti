@@ -1,208 +1,57 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
-import { bookBus } from "../scenes/CastleWings";
+import { identity } from "../data/content";
 
 export default function OpenDoor() {
   const set = useStore((s) => s.set);
   const [state, setState] = useState<"idle" | "sending" | "ok" | "error">("idle");
   const [error, setError] = useState("");
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "", company: "" });
-
+  const pending = useRef(false);
+  const submissionId = useRef(crypto.randomUUID());
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.code === "Escape") set({ phase: "world" });
-    };
+    const handler = (e: KeyboardEvent) => { if (e.code === "Escape") set({ phase: "world", panel: null }); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [set]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const st = useStore.getState();
-      if (st.panel !== "book") return;
-      if (e.key === "ArrowRight") bookBus.next();
-      if (e.key === "ArrowLeft") bookBus.prev();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, []);
-
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.company) return; // honeypot
-    if (!form.name.trim() || !form.email.trim() || !form.subject.trim() || !form.message.trim()) {
-      setState("error");
-      setError("Please fill in every field — Shruti reads each message herself.");
-      return;
+    if (pending.current) return;
+    if (form.company || Object.entries(form).some(([k,v]) => k !== "company" && !v.trim()) || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
+      setError("Please complete every field and check your email address."); setState("error"); return;
     }
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) {
-      setState("error");
-      setError("That email address looks incomplete.");
-      return;
-    }
-    setState("sending");
-    setError("");
-    const payload = {
-      name: form.name,
-      email: form.email,
-      subject: form.subject,
-      message: form.message,
-    };
+    pending.current = true; setState("sending"); setError("");
     try {
-      const backend = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
-      const res = await fetch(`${backend}/api/contact`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) throw new Error(await res.text());
+      const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...form, submissionId: submissionId.current }), signal: AbortSignal.timeout(20000) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.status !== "accepted") throw new Error(data.error || "The message could not be sent. Please retry or email Shruti directly.");
       setState("ok");
-    } catch {
-      // Netlify Forms fallback (works when deployed on Netlify)
-      try {
-        const body = new URLSearchParams({ "form-name": "open-door-contact", ...payload });
-        const res = await fetch("/", { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: body.toString() });
-        if (!res.ok) throw new Error();
-        setState("ok");
-      } catch {
-        setState("error");
-        setError("The door didn't quite reach — please try again, or email her directly.");
-      }
-    }
+    } catch (err) {
+      setState("error"); setError(err instanceof Error && err.name !== "TimeoutError" ? err.message : "The request timed out. You can retry safely or email Shruti directly.");
+    } finally { pending.current = false; }
   };
-
-  const field = (key: keyof typeof form) => form[key];
-  const setField = (key: keyof typeof form, value: string) =>
-    setForm({ ...form, [key]: value });
-
   return (
     <section className="open-door" data-testid="open-door">
-      <div className="od-frame" aria-hidden />
-      <div className="od-inner">
-        <span className="eyebrow">THE JOURNEY ENDS WHERE IT BEGAN</span>
-        <h1>
-          The Open <em>Door</em>
-        </h1>
-        <p className="od-lede">
-          Every little universe has a door that leads back to the real world.
-          This one is open — the person who built all of this is on the other
-          side.
-        </p>
-
-        <div className="od-links">
-          <a href="https://www.linkedin.com/in/shruti-t-694467279/" target="_blank" rel="noreferrer" data-testid="od-linkedin">
-            LinkedIn <span aria-hidden>↗</span>
-          </a>
-          <a href="https://github.com/ShrutiThakur1729" target="_blank" rel="noreferrer" data-testid="od-github">
-            GitHub <span aria-hidden>↗</span>
-          </a>
-          <a href="https://jlstech.io/home" target="_blank" rel="noreferrer" data-testid="od-jls">
-            JLS Technologies <span aria-hidden>↗</span>
-          </a>
-          <a href="/assets/resume.pdf" download data-testid="od-resume">
-            Download Resume <span aria-hidden>↓</span>
-          </a>
-        </div>
-
-        {state === "ok" ? (
-          <div className="od-success" data-testid="contact-success" role="status">
-            <h2>Delivered.</h2>
-            <p>
-              Your message has passed through the door. Shruti reads every one —
-              thank you for wandering all the way here.
-            </p>
-            <button className="btn-secondary" onClick={() => setState("idle")}>
-              Send another
-            </button>
-          </div>
-        ) : (
-          <form
-            className="od-form"
-            name="open-door-contact"
-            method="POST"
-            data-netlify="true"
-            netlify-honeypot="company"
-            onSubmit={submit}
-            data-testid="contact-form"
-          >
-            <p className="hidden-field">
-              <label>
-                Don't fill this out:{" "}
-                <input
-                  name="company"
-                  value={field("company")}
-                  onChange={(e) => setField("company", e.target.value)}
-                  tabIndex={-1}
-                  autoComplete="off"
-                />
-              </label>
-            </p>
-            <div className="od-grid">
-              <label>
-                <span>Name</span>
-                <input
-                  name="name"
-                  required
-                  data-testid="contact-name"
-                  value={field("name")}
-                  onChange={(e) => setField("name", e.target.value)}
-                  autoComplete="name"
-                />
-              </label>
-              <label>
-                <span>Email</span>
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  data-testid="contact-email"
-                  value={field("email")}
-                  onChange={(e) => setField("email", e.target.value)}
-                  autoComplete="email"
-                />
-              </label>
-              <label className="full">
-                <span>Subject / Reason</span>
-                <input
-                  name="subject"
-                  required
-                  data-testid="contact-subject"
-                  value={field("subject")}
-                  onChange={(e) => setField("subject", e.target.value)}
-                />
-              </label>
-              <label className="full">
-                <span>Message</span>
-                <textarea
-                  name="message"
-                  required
-                  rows={5}
-                  data-testid="contact-message"
-                  value={field("message")}
-                  onChange={(e) => setField("message", e.target.value)}
-                />
-              </label>
-            </div>
-            {state === "error" && (
-              <p className="od-error" role="alert" data-testid="contact-error">
-                {error}
-              </p>
-            )}
-            <button className="btn-primary" type="submit" disabled={state === "sending"} data-testid="contact-submit">
-              {state === "sending" ? "Opening the door…" : "Send through the door"} <span aria-hidden>↗</span>
-            </button>
-            <p className="privacy-note">
-              Your message goes only to Shruti's inbox ({""}
-              <span aria-label="email">1729.shruti@gmail.com</span>) — never to
-              anywhere else, and never shown publicly.
-            </p>
-          </form>
-        )}
-
-        <button className="btn-secondary od-return" data-testid="od-return" onClick={() => set({ phase: "world" })}>
-          ← Return to the universe
-        </button>
+      <header className="od-header"><span className="od-brand">✧ <span>THE WORLD INSIDE<em>A little universe called Shruti</em></span></span><button onClick={() => set({ phase: "world", panel: null })}>Return to the universe ←</button></header>
+      <div className="od-composition">
+        <div className="od-scenery" role="img" aria-label="An open Gothic doorway overlooking a golden garden path" />
+        <article className="od-parchment">
+          <span className="chapter-mark">THE CLOSING CHAPTER</span>
+          <h1>The Open Door</h1><div className="od-ornament" aria-hidden>──── ✧ ────</div>
+          <h2>Let’s Connect</h2><p>Have a question, an idea, a collaboration in mind,<br className="desktop-break"/> or just want to say hello? I’d love to hear from you.</p>
+          {state === "ok" ? <div role="status" className="od-success" data-testid="contact-success"><h2>On its way.</h2><p>The email service accepted your message for sending to Shruti. Inbox delivery is not yet confirmed.</p><button className="btn-primary" onClick={() => { setForm({ name: "", email: "", subject: "", message: "", company: "" }); submissionId.current = crypto.randomUUID(); setState("idle"); }}>Write another message</button></div> :
+          <form className="od-form" onSubmit={submit} data-testid="contact-form" aria-busy={state === "sending"}>
+            <label className="hidden-field" aria-hidden>Leave this empty<input name="company" tabIndex={-1} autoComplete="off" value={form.company} onChange={e => setForm({ ...form, company: e.target.value })}/></label>
+            {([['name','Your Name','text',100],['email','Your Email','email',254],['subject','Subject / Reason','text',160]] as const).map(([key,label,type,max]) => <label key={key}><span>{label}</span><input name={key} type={type} autoComplete={key === 'subject' ? 'off' : key} required maxLength={max} placeholder={label} data-testid={`contact-${key}`} value={form[key]} onChange={e => setForm({ ...form, [key]: e.target.value })}/></label>)}
+            <label><span>Your Message</span><textarea name="message" required maxLength={6000} rows={4} placeholder="Your Message…" data-testid="contact-message" value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}/></label>
+            {state === "error" && <p role="alert" className="od-error" data-testid="contact-error">{error}</p>}
+            <button className="btn-primary" type="submit" disabled={state === "sending"} data-testid="contact-submit">{state === "sending" ? "Sending your message…" : "Send a Message  ➤"}</button>
+            <p className="privacy-note">Your message is private. Prefer email? <a href="mailto:1729.shruti@gmail.com">1729.shruti@gmail.com</a></p>
+          </form>}
+        </article>
+        <aside className="od-links" aria-label="Connect with Shruti"><span aria-hidden>✧</span><a href={identity.linkedin} target="_blank" rel="noopener noreferrer" data-testid="od-linkedin">in <span>LinkedIn Profile ↗</span></a><a href={identity.github} target="_blank" rel="noopener noreferrer" data-testid="od-github">⌘ <span>GitHub Profile ↗</span></a><a href={identity.resume} download="Shruti_Thakur_Resume.pdf" data-testid="od-resume">↓ <span>Download Resume</span></a><a href={identity.jls} target="_blank" rel="noopener noreferrer" data-testid="od-jls" className="od-jls">JLS Technologies ↗</a><span aria-hidden>✧</span></aside>
       </div>
+      <footer className="od-footer"><span>✧ THE WORLD INSIDE</span><i>Thank you for visiting my world.</i></footer>
     </section>
   );
 }

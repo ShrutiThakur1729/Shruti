@@ -57,7 +57,7 @@ export default function ControlsHelp() {
                 ["Esc", "Release mouse / close panels"],
                 ["Space / Ctrl", "Adjust altitude during flights"],
               ]),
-          ["Hand gestures", "Move your hand to look · pinch to select · hold pinch to walk · swipe to switch world"],
+          ["Hand gestures", "Swipe to look · pinch to select · hold to walk. Atlas: drag/pan and two-hand zoom. Books: swipe to turn pages."],
         ].map(([key, label]) => (
           <div key={key}>
             <kbd>{key}</kbd>

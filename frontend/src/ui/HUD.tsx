@@ -3,6 +3,7 @@ import { useStore, isTouch } from "../state/store";
 import { getWorld } from "../data/worlds";
 import { input } from "../systems/input";
 import { findInteraction } from "../data/interactions";
+import GardenGuide from './GardenGuide';
 
 export function HUD() {
   const world = useStore((s) => s.world);
@@ -90,6 +91,7 @@ export function HUD() {
 
       {!journey && !panel && (
         <div className="quick-actions">
+          {(zone==='gallery'||zone==='library')&&<button onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
           <button data-testid="quick-meet" onClick={() => useStore.getState().openPanel("story")}>
             Meet Shruti
           </button>
@@ -105,6 +107,7 @@ export function HUD() {
       )}
 
       {isTouch && !panel && !journey && <TouchControls />}
+      {world==='garden'&&!panel&&!journey&&<GardenGuide/>}
     </>
   );
 }

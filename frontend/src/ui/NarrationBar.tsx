@@ -30,7 +30,7 @@ export default function NarrationBar() {
               <span className="nb-label">
                 NARRATOR {narrating ? "· SPEAKING" : audio.themePlaying ? "" : ""}
               </span>
-              <p className="nb-caption" data-testid="narration-caption" aria-live="polite">
+              <p className="nb-caption" data-testid="narration-caption" aria-live="polite" hidden={!audio_.captions}>
                 {caption || "The narrator waits — press play to begin the guided journey."}
               </p>
             </div>
@@ -91,7 +91,7 @@ export default function NarrationBar() {
         <button data-testid="bar-atlas-button" onClick={() => openPanel("atlas")}>
           Atlas <kbd>M</kbd>
         </button>
-        <button data-testid="bar-open-door-button" onClick={() => useStore.getState().set({ phase: "opendoor" })}>
+        <button data-testid="bar-open-door-button" onClick={() => useStore.getState().set({ phase: "opendoor", panel: null })}>
           The Open Door
         </button>
       </div>

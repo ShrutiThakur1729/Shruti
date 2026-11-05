@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { GestureAction } from '../systems/gestureRecognizer';
 import { projects, books, poems, poetryCredit, reading, soundtrack, gardenNotes } from "../data/content";
 import { audio } from "../audio/AudioEngine";
 import { bookBus } from "../scenes/CastleWings";
@@ -49,6 +50,13 @@ export function ExhibitPanel({ id }: { id: string }) {
 export function BookPanel({ id }: { id: string }) {
   const book = books.find((b) => b.id === id);
   const [page, setPage] = useState(0);
+  useEffect(()=>{
+    const turn=(dir:number)=>{setPage(p=>Math.max(0,Math.min((book?.pages.length??1)-1,p+dir)));audio.playSfx('page');};
+    const key=(e:KeyboardEvent)=>{if(e.key==='ArrowRight')turn(1);if(e.key==='ArrowLeft')turn(-1);};
+    const gesture=(e:Event)=>{const a=(e as CustomEvent<GestureAction>).detail;if(a.type==='swipe'&&a.dx)turn(a.dx<0?1:-1);};
+    window.addEventListener('keydown',key);window.addEventListener('twi-gesture',gesture);
+    return()=>{window.removeEventListener('keydown',key);window.removeEventListener('twi-gesture',gesture);};
+  },[book]);
   if (!book) return null;
   const pages = book.pages;
   return (
@@ -163,64 +171,6 @@ export function ReadingPanel() {
 }
 
 /* ————— Personal soundtrack ————— */
-export function SoundtrackPanel() {
-  const [playing, setPlaying] = useState(false);
-  const closePanel = useStore((s) => s.closePanel);
-  return (
-    <article className="panel-body soundtrack" data-testid="soundtrack-panel">
-      <span className="chapter-mark">PERSONAL SOUNDTRACK</span>
-      <h2>
-        {soundtrack.title} <em>· {soundtrack.artist}</em>
-      </h2>
-      <p>{soundtrack.note}</p>
-      {!playing ? (
-        <button
-          className="btn-primary"
-          data-testid="soundtrack-play"
-          onClick={() => {
-            audio.pauseForTrack();
-            setPlaying(true);
-          }}
-        >
-          Play the track — the garden will hush <span aria-hidden>♪</span>
-        </button>
-      ) : (
-        <>
-          <div className="spotify-embed">
-            <iframe
-              title={`${soundtrack.title} — ${soundtrack.artist}`}
-              src={soundtrack.spotify}
-              width="100%"
-              height="152"
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              loading="lazy"
-            />
-          </div>
-          <button
-            className="btn-secondary"
-            data-testid="soundtrack-restore"
-            onClick={() => audio.resumeFromTrack()}
-          >
-            Restore the garden's music
-          </button>
-        </>
-      )}
-      <div className="panel-actions">
-        <button
-          className="btn-secondary"
-          data-testid="soundtrack-close"
-          onClick={() => {
-            audio.resumeFromTrack();
-            closePanel();
-          }}
-        >
-          Close
-        </button>
-      </div>
-    </article>
-  );
-}
-
 /* ————— Garden notes / fountain ————— */
 export function NotePanel({ id }: { id: string }) {
   let title = "";
@@ -261,7 +211,7 @@ export function WelcomePanel() {
     <article className="panel-body welcome-panel" data-testid="welcome-panel">
       <span className="chapter-mark">WELCOME, TRAVELLER!</span>
       <h2>
-        Welcome, <em>Traveller!</em>
+        Hello World.<br/><em>Welcome, Traveller!</em>
       </h2>
       <p className="lead">
         This is a little universe called Shruti — a valley for a first hello, a
