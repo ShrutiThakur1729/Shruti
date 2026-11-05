@@ -1,0 +1,298 @@
+import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Canvas } from "@react-three/fiber";
+import { useStore, isTouch } from "./state/store";
+import { audio } from "./audio/AudioEngine";
+import { initNarrator, narrator } from "./audio/narrator";
+import WorldRoot from "./scenes/WorldRoot";
+import CameraRig from "./systems/CameraRig";
+import Performance from "./systems/Performance";
+import Landing from "./ui/Landing";
+import { HUD, useInteractKey } from "./ui/HUD";
+import NarrationBar from "./ui/NarrationBar";
+import Atlas from "./ui/Atlas";
+import MeetShruti from "./ui/MeetShruti";
+import ControlsHelp from "./ui/ControlsHelp";
+import {
+  ExhibitPanel,
+  BookPanel,
+  PoemsPanel,
+  ReadingPanel,
+  SoundtrackPanel,
+  NotePanel,
+  WelcomePanel,
+} from "./ui/panels";
+import OpenDoor from "./ui/OpenDoor";
+import { bookBus, BookExperience } from "./scenes/CastleWings";
+import { books } from "./data/content";
+
+class SceneError extends React.Component<
+  { children: React.ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? (
+      <div className="scene-error">
+        The 3D world could not start on this device. You can still meet Shruti
+        through the panels.
+        <button onClick={() => location.reload()}>Try again</button>
+      </div>
+    ) : (
+      this.props.children
+    );
+  }
+}
+
+function Dialog({
+  children,
+  wide = false,
+  testid = "dialog",
+}: {
+  children: React.ReactNode;
+  wide?: boolean;
+  testid?: string;
+}) {
+  const closePanel = useStore((s) => s.closePanel);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const previous = document.activeElement as HTMLElement;
+    ref.current?.querySelector<HTMLElement>("button, a")?.focus();
+    const trap = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        closePanel();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const nodes = ref.current?.querySelectorAll<HTMLElement>(
+        'button:not(:disabled),a[href],[tabindex="0"]'
+      );
+      if (!nodes?.length) return;
+      const first = nodes[0],
+        last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener("keydown", trap);
+    return () => {
+      document.removeEventListener("keydown", trap);
+      previous?.focus();
+    };
+  }, [closePanel]);
+  return (
+    <div className="scrim">
+      <div
+        ref={ref}
+        role="dialog"
+        aria-modal="true"
+        data-testid={testid}
+        className={`dialog ${wide ? "wide" : ""}`}
+      >
+        <button className="dialog-close" data-testid="dialog-close" onClick={closePanel} aria-label="Close">
+          ✕
+        </button>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function BookOverlay() {
+  const refId = useStore((s) => s.refId);
+  const closePanel = useStore((s) => s.closePanel);
+  const book = books.find((b) => b.id === refId);
+  if (!book) return null;
+  return (
+    <>
+      <BookExperience bookId={book.id} />
+      <div className="book-bar" data-testid="book-bar">
+        <span className="book-title">{book.title}</span>
+        <button data-testid="book3d-prev" onClick={() => bookBus.prev()} aria-label="Previous page">
+          ←
+        </button>
+        <button data-testid="book3d-next" onClick={() => bookBus.next()} aria-label="Next page">
+          →
+        </button>
+        <button
+          data-testid="book3d-close"
+          onClick={() => {
+            audio.playSfx("bookClose");
+            closePanel();
+          }}
+        >
+          Close Book
+        </button>
+        <button
+          data-testid="book3d-reader"
+          onClick={() => useStore.getState().openPanel("book", book.id)}
+        >
+          Open in reader
+        </button>
+        <span className="book-hint">← → turn pages · Esc closes</span>
+      </div>
+    </>
+  );
+}
+
+function Panels() {
+  const panel = useStore((s) => s.panel);
+  const refId = useStore((s) => s.refId);
+  if (!panel) return null;
+  let body: React.ReactNode = null;
+  if (panel === "welcome") body = <WelcomePanel />;
+  else if (panel === "atlas") body = <Atlas />;
+  else if (panel === "controls") body = <ControlsHelp />;
+  else if (panel === "story") body = <MeetShruti />;
+  else if (panel === "exhibit") body = <ExhibitPanel id={refId || ""} />;
+  else if (panel === "book" && isTouch) body = <BookPanel id={refId || ""} />;
+  else if (panel === "poems") body = <PoemsPanel />;
+  else if (panel === "reading") body = <ReadingPanel />;
+  else if (panel === "soundtrack") body = <SoundtrackPanel />;
+  else if (panel === "note") body = <NotePanel id={refId || ""} />;
+  if (!body) return null;
+  return (
+    <Dialog wide={panel === "atlas"}>
+      {body}
+    </Dialog>
+  );
+}
+
+export default function App() {
+  const phase = useStore((s) => s.phase);
+  const audio_ = useStore((s) => s.audio);
+  const world = useStore((s) => s.world);
+  const zone = useStore((s) => s.zone);
+  const guided = useStore((s) => s.guided);
+  const panel = useStore((s) => s.panel);
+  const fading = useStore((s) => s.fading);
+
+  useInteractKey();
+
+  // narrator singleton → store
+  useEffect(() => {
+    initNarrator({
+      onLine: (line) => useStore.setState({ caption: line }),
+      onDone: () => useStore.setState({ narrating: false }),
+      onState: (playing) => useStore.setState({ narrating: playing }),
+    });
+  }, []);
+
+  // voice availability
+  useEffect(() => {
+    const backend = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
+    if (!backend) {
+      useStore.setState({ voiceAvailable: false });
+      return;
+    }
+    fetch(`${backend}/api/voice-status`)
+      .then((r) => r.json())
+      .then((d) => useStore.setState({ voiceAvailable: !!d.available }))
+      .catch(() => useStore.setState({ voiceAvailable: false }));
+  }, []);
+
+  // audio settings → engine
+  useEffect(() => {
+    audio.setSettings(audio_);
+  }, [audio_]);
+
+  // world ambience
+  useEffect(() => {
+    if (phase === "world") audio.setWorld(world);
+  }, [world, phase]);
+
+  // guided narration scripts
+  const lastSeq = useRef("");
+  useEffect(() => {
+    if (phase !== "world") return;
+    if (!guided) {
+      narrator.stop();
+      useStore.setState({ caption: "" });
+      lastSeq.current = "";
+      return;
+    }
+    if (panel) {
+      narrator.pause();
+      return;
+    }
+    const key = world === "hello" ? "hello" : world === "castle" ? zone ?? "castle" : "garden";
+    if (narrator.playing && narrator.paused && key === lastSeq.current) {
+      narrator.resume();
+      return;
+    }
+    if (key !== lastSeq.current) {
+      lastSeq.current = key;
+      import("./data/narration").then(({ narrationScripts }) => {
+        const lines = narrationScripts[key] || [];
+        if (lines.length) narrator.play(key, lines);
+      });
+    }
+  }, [guided, panel, world, zone, phase]);
+
+  // keyboard: M / Esc
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.code === "KeyM" && !e.repeat && phase === "world") {
+        e.preventDefault();
+        const st = useStore.getState();
+        if (st.journey) return;
+        if (st.panel === "atlas") st.closePanel();
+        else st.openPanel("atlas");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [phase]);
+
+  // start audio on entering (user gesture)
+  useEffect(() => {
+    if (phase !== "landing") {
+      audio.init();
+      audio.startTheme();
+    }
+  }, [phase]);
+
+  return (
+    <main className={phase === "opendoor" ? "opendoor-mode" : ""}>
+      {phase !== "opendoor" && (
+        <SceneError>
+          <Canvas
+            shadows
+            dpr={[1, 1.5]}
+            camera={{ fov: 55, near: 0.1, far: 1200 }}
+            gl={{ antialias: true, powerPreference: "high-performance" }}
+            data-testid="world-canvas"
+          >
+            <Suspense fallback={null}>
+              <Performance active={!panel} />
+              {phase === "world" && <WorldRoot />}
+              <CameraRig />
+              {panel === "book" && !isTouch && <BookOverlay />}
+            </Suspense>
+          </Canvas>
+        </SceneError>
+      )}
+      <output id="performance-report" className="performance-report" aria-label="Rendering performance">
+        Measuring scene…
+      </output>
+      <div className="vignette" aria-hidden />
+      <div className={`fade-layer ${fading ? "on" : ""}`} aria-hidden />
+
+      {phase === "landing" && <Landing />}
+      {phase === "world" && (
+        <>
+          <HUD />
+          <NarrationBar />
+          <Panels />
+        </>
+      )}
+      {phase === "opendoor" && <OpenDoor />}
+    </main>
+  );
+}

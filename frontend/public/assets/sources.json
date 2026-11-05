@@ -1,0 +1,62 @@
+[
+  {
+    "file": "tree.glb",
+    "source": "https://polyhaven.com/a/island_tree_02",
+    "license": "CC0-1.0",
+    "bytes": 7105052,
+    "triangles": 21212
+  },
+  {
+    "file": "rocks.glb",
+    "source": "https://polyhaven.com/a/rock_moss_set_01",
+    "license": "CC0-1.0",
+    "bytes": 941576,
+    "triangles": 18927
+  },
+  {
+    "file": "fern.glb",
+    "source": "https://polyhaven.com/a/fern_02",
+    "license": "CC0-1.0",
+    "bytes": 1062584,
+    "triangles": 3115
+  },
+  {
+    "file": "tree-lod.glb",
+    "source": "https://polyhaven.com/a/island_tree_02",
+    "license": "CC0-1.0",
+    "bytes": 5713992,
+    "triangles": 3254
+  },
+  {
+    "file": "rocks-lod.glb",
+    "source": "https://polyhaven.com/a/rock_moss_set_01",
+    "license": "CC0-1.0",
+    "bytes": 525412,
+    "triangles": 1888
+  },
+  {
+    "file": "fern-lod.glb",
+    "source": "https://polyhaven.com/a/fern_02",
+    "license": "CC0-1.0",
+    "bytes": 1006600,
+    "triangles": 1087
+  },
+  {
+    "asset": "cobblestone_floor_08",
+    "source": "https://polyhaven.com/a/cobblestone_floor_08",
+    "license": "CC0-1.0",
+    "maps": "1k diffuse, OpenGL normal, roughness"
+  },
+  {
+    "asset": "bark_brown_02",
+    "source": "https://polyhaven.com/a/bark_brown_02",
+    "license": "CC0-1.0",
+    "maps": "1k diffuse, OpenGL normal, roughness"
+  },
+  {
+    "asset": "forest_ground_04",
+    "source": "https://polyhaven.com/a/forest_ground_04",
+    "license": "CC0-1.0",
+    "maps": "1k diffuse, OpenGL normal, roughness"
+  }
+]

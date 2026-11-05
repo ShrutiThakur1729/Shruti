@@ -1,0 +1,261 @@
+{
+  "identity": {
+    "name": "Shruti Thakur",
+    "location": "Thane, Maharashtra",
+    "resume_email": "sthakur.shruti@gmail.com",
+    "contact_form_recipient": "1729.shruti@gmail.com",
+    "github": "https://github.com/ShrutiThakur1729",
+    "linkedin": "https://www.linkedin.com/in/shruti-t-694467279/",
+    "tagline": "A little universe called Shruti"
+  },
+  "education": [
+    {
+      "institution": "A.P. Shah Institute of Technology",
+      "location": "Thane, Maharashtra",
+      "qualification": "B.E. in Information Technology",
+      "honors": "Artificial Intelligence & Machine Learning",
+      "cgpa": "9.35 (Semester V, as stated in supplied resume)",
+      "expected_graduation": "May 2027"
+    },
+    {
+      "institution": "IIT Madras",
+      "qualification": "BS Degree in Data Science and Applications (Online)",
+      "period": "2024–Present"
+    }
+  ],
+  "skills": {
+    "Programming Languages": [
+      "C",
+      "Python",
+      "Java",
+      "JavaScript"
+    ],
+    "Web & Mobile Development": [
+      "React",
+      "Flutter",
+      "HTML",
+      "CSS"
+    ],
+    "Backend Development": [
+      "Node.js",
+      "Express.js"
+    ],
+    "Databases": [
+      "MySQL",
+      "MongoDB",
+      "Firebase",
+      "Supabase"
+    ],
+    "Cybersecurity": [
+      "OWASP",
+      "Burp Suite",
+      "Nmap",
+      "Wireshark",
+      "SQLMap",
+      "Linux"
+    ],
+    "AI & APIs": [
+      "Google Gemini API",
+      "Hugging Face"
+    ],
+    "Cloud & Deployment": [
+      "AWS",
+      "Netlify",
+      "Vercel"
+    ],
+    "Tools & IDEs": [
+      "Git",
+      "GitHub",
+      "VS Code",
+      "PyCharm"
+    ],
+    "UI/UX Design": [
+      "Figma",
+      "Canva"
+    ]
+  },
+  "experience": [
+    {
+      "role": "AI Engineering Intern",
+      "company": "AlgoForce AI",
+      "period": "July 2026 – September 2026",
+      "contributions": [
+        "Optra: AI-powered operations copilot",
+        "FORGE: AI-driven startup orchestration platform",
+        "Vibe: Gen-Z social mobile platform using AI to translate digital intent into personalised real-world connections"
+      ]
+    },
+    {
+      "role": "Full-Stack Development (project-based)",
+      "company": "JLS Technologies LLP",
+      "period": "2026",
+      "url": "https://jlstech.io/home",
+      "description": "Developed and deployed production web applications, PWAs, cloud infrastructure and digital solutions from concept to deployment."
+    }
+  ],
+  "gallery_projects": [
+    {
+      "name": "ARGUS",
+      "subtitle": "AI Cyber Resilience Platform",
+      "url": "https://argus-core.netlify.app/login",
+      "technologies": [
+        "Python",
+        "FastAPI",
+        "AI Agents",
+        "Security Automation"
+      ],
+      "event": "Economic Times AI Hackathon 2.0",
+      "result": "Semi-finalist",
+      "description": "AI-driven cybersecurity platform for automated threat analysis, security workflows and resilient system architecture."
+    },
+    {
+      "name": "AccessBridge AI",
+      "subtitle": "Multilingual AI Assistant",
+      "url": "https://access-bridge-ai.web.app/",
+      "technologies": [
+        "Flutter",
+        "Firebase",
+        "Gemini API",
+        "Speech Recognition"
+      ],
+      "event": "AWS AI for Bharat Hackathon",
+      "result": "Prototype Phase",
+      "description": "Multilingual AI mobile assistant integrating speech recognition, language processing and AI assistance to improve access to digital services."
+    },
+    {
+      "name": "Samhita",
+      "subtitle": "AI Marketplace",
+      "url": "https://samhita-ai.netlify.app/",
+      "technologies": [
+        "React",
+        "Firebase",
+        "Gemini API",
+        "Voice AI"
+      ],
+      "event": "Google Gen AI Exchange Hackathon 2.0",
+      "result": "Semi-finalist",
+      "description": "AI-powered marketplace connecting artisans with buyers through assisted onboarding, product discovery and digital commerce workflows."
+    },
+    {
+      "name": "Urban Ecology Compiler",
+      "subtitle": "AI Geospatial Decision-Support System",
+      "url": "https://urbanecologycompiler.netlify.app/",
+      "technologies": [
+        "Next.js",
+        "React",
+        "TypeScript",
+        "Tailwind CSS",
+        "MapLibre GL JS",
+        "GeoJSON",
+        "Turf.js",
+        "Gemini API",
+        "OpenStreetMap/Overpass",
+        "Copernicus Sentinel",
+        "Open-Meteo",
+        "OpenElevation/SRTM"
+      ],
+      "description": "Budget-constrained geospatial decision support for ecological interventions, with flood resilience as the primary objective and a ₹10 lakh planning budget. Verify the current deployed feature set before publishing detailed claims."
+    },
+    {
+      "name": "COSMIC Data Fusion",
+      "subtitle": "Astronomical Data Fusion Project",
+      "url": "https://cosmicdatafusion.netlify.app/",
+      "technologies": [],
+      "description": "Astronomical-data fusion project. Inspect the live project and confirm its precise purpose and technology stack before publishing further details."
+    }
+  ],
+  "achievements": [
+    "All You Can Do with AI — Winner",
+    "Practice and Create — Winner",
+    "Google Gen AI Exchange Hackathon 2.0 (2025) — Semi-finalist, selected for Prototype Development",
+    "Economic Times AI Hackathon 2.0 (2026) — Qualified for Prototype Development Phase",
+    "AWS AI for Bharat Hackathon (2026) — Advanced to Prototype Development Phase",
+    "NAKSHATRA National Hackathon (2026) — Qualified for semi-finals of the 24-hour national-level hackathon",
+    "Smart India Hackathon (2024) — Qualified through Institute-Level Selection Round",
+    "GDG on Campus APSIT TechSprint (2025) — Top 15, Open Innovation Track",
+    "Published Poet — Featured in a Notion Press publication",
+    "Runner-up — APSIT Chess Competition (2025)",
+    "Runner-up — World Water Day Slogan Writing Competition (2023)"
+  ],
+  "leadership": [
+    "Literature Head — GDG on Campus APSIT (2024–25)",
+    "Content Head — IEEE APSIT (2024–25)",
+    "Treasurer — ITSA, APSIT (2025–26)",
+    "Host and Anchor — APSIT events including OjUS Fest 2024 and 2025"
+  ],
+  "volunteering": [
+    "Digital Marketing & Fundraising Intern — Muskurahat Foundation; supported education campaigns and raised ₹17,070 in one month",
+    "Core Team Member — Google Developers Group Cloud Mumbai; event management, speaker coordination and anchoring",
+    "Volunteer Photographer — ITSA, APSIT; covered departmental events including IT Week"
+  ],
+  "memory_garden_content": {
+    "poems": [
+      {
+        "title": "Glittering Desire",
+        "text": "The lights were glittering,\njust like stars twinkling in the dark sky,\n\nI was standing on the stage astound,\nand everybody found,\n\nOnes who disparaged me,\nnow cherished me,\nI looked around the Crowd,\nand saw myself profound,\n\nIt was something that I wished,\nAnd that moment enriched it,\n\nHours of hardwork made through it,\nI was honored with a reward and lots of\napwwplaud,\n\nThat’s where my beautiful dream Halt.....\n\nIt woke me when the sun was smiling,\nWhen birds were whistling,\nWhen trees were shimmering,\nJust how my dream was glittering."
+      },
+      {
+        "title": "The Last Day on Planet Earth",
+        "text": "It was Brick and Bitter cold,\nAs it was told,\n\nThe Sky was Dark gray,\nAnd no one was at bay,\n\nThe Climate was erratic,\nAnd the sight was traumatic,\n\nThe Glaciers were melting down,\nAnd the flood drown the town,\n\nNo Trees, No house could be found,\nAs everything was razed to ground,\n\nThe Birds lost their way,\nIt was end of the day,\n\nNot even Sun was there to wave,\nThe land turned into a \"Human grave\",\n\nPeople could only Pray,\nWhile the \"Lethal Asteroid\" was at it’s way,\n\nThis was the sight,\n\"While we were at our Planet\",\nThe Earth was left with lonely nights......\n\nBut the END gave BIRTH,\nThe Nature formed another \"EARTH\"."
+      }
+    ],
+    "reading_nook": {
+      "book": "The Alchemist",
+      "author": "Paulo Coelho",
+      "asset_needed": "User must provide the actual cover image file; the screenshot of the Windows folder is not the cover image."
+    },
+    "personal_soundtrack": [
+      {
+        "title": "Magic Shop",
+        "artist": "BTS",
+        "use": "Featured personal listening track; use an authorised official embed, not the uploaded MP3 as a public site asset."
+      },
+      {
+        "title": "Millennial Love",
+        "artist": "Lim Ha Young",
+        "source": "Search: WWW (Original Television Soundtrack)",
+        "use": "Candidate for the site's featured theme/player; use authorised official embed or obtain a synchronisation/public-performance licence before hosting the uploaded M4A."
+      }
+    ],
+    "personal_story": "Use a concise first-person introduction based only on verified facts: Shruti is an Information Technology student with AI & ML honours who enjoys building AI-powered, full-stack and accessible software experiences. Do not use private family or emotional history unless separately supplied and explicitly approved for publication.",
+    "note": "Do not invent hobbies, memories, favourite things or biographical details. Provide editable slots for content she may add later. Preserve poems in original wording and line breaks unless the user supplies an approved edited version."
+  },
+  "open_door": {
+    "kind": "Static 2D contact experience, not a 3D world",
+    "links": {
+      "LinkedIn": "https://www.linkedin.com/in/shruti-t-694467279/",
+      "GitHub": "https://github.com/ShrutiThakur1729",
+      "JLS Technologies": "https://jlstech.io/home",
+      "Download Resume": "Use the latest resume PDF supplied to Codex"
+    },
+    "form_fields": [
+      "Name",
+      "Email",
+      "Subject / Reason",
+      "Message"
+    ],
+    "notification_recipient": "1729.shruti@gmail.com"
+  },
+  "scope": {
+    "immersive_worlds": [
+      "The First Hello",
+      "The Castle",
+      "The Memory Garden"
+    ],
+    "static_destination": "The Open Door",
+    "development_order": [
+      "performance audit and First Hello polish",
+      "Castle",
+      "Memory Garden",
+      "Open Door",
+      "audio and narration integration",
+      "mobile/touch QA",
+      "hand gestures last"
+    ],
+    "explicitly_deferred": [
+      "girl character",
+      "dragon",
+      "hand gesture camera control"
+    ]
+  }
+}

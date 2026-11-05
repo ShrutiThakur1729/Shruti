@@ -1,0 +1,49 @@
+{
+  "app_name": "THE WORLD INSIDE: A little universe called Shruti",
+  "theme": "Organic & Earthy / Luxury Botanical",
+  "archetype": "Organic & Earthy (Deep forest-green, antique gold, warm ivory, parchment)",
+  "typography": {
+    "headings": "Playfair Display, serif",
+    "body": "Plus Jakarta Sans, sans-serif",
+    "mono": "JetBrains Mono, monospace"
+  },
+  "colors": {
+    "primary": "#132A13",
+    "secondary": "#213821",
+    "accent_gold": "#D4AF37",
+    "accent_gold_muted": "#C5A059",
+    "background": "#0B160B",
+    "surface": "#162816",
+    "surface_glass": "rgba(19, 42, 19, 0.75)",
+    "text_ivory": "#F4F1EA",
+    "text_muted": "#A8B3A8",
+    "border_gold": "rgba(212, 175, 55, 0.35)",
+    "forbidden_color_check": "Checked. No #7351B7 or #1B93A4 used."
+  },
+  "image_urls": {
+    "atlas_parchment": "https://images.unsplash.com/photo-1777768785217-d67e806d8162?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "forest_valley": "https://images.unsplash.com/photo-1774015583916-614d8280433d?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "castle_exhibit": "https://images.unsplash.com/photo-1763909130239-1b45e06e94ec?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "library_bookshelf": "https://images.unsplash.com/photo-1600181982553-ce7d36051c01?crop=entropy&cs=srgb&fm=jpg&q=85",
+    "archive_book": "https://images.unsplash.com/photo-1534289855405-ab820a118fc1?crop=entropy&cs=srgb&fm=jpg&q=85"
+  },
+  "key_features": [
+    "Cinematic landing page with 'Enter the Universe' transition",
+    "Onboarding 'Welcome, Traveller!' panel with Guided Journey vs Explore Independently",
+    "Interactive 3D / Simulated Worlds (The First Hello Valley, The Castle Gallery, The Memory Garden, The Open Door)",
+    "Illustrated World Atlas (M key) with destinations, markers, and instant travel",
+    "'Meet Shruti' author biography and profile panels",
+    "Castle gallery with 5 project exhibits and 'View Project' modal/links",
+    "Living Archives library with 6 interactive books (page turns + 2D immersive reader)",
+    "Memory Garden poetry nook with contemplative verses",
+    "Persistent bottom narration, music player (Spotify embed simulation + volume controls), and captions bar",
+    "The Open Door contact form with validation and real submit feedback",
+    "Mobile touch controls, joystick, look drag, and responsive 2D fallbacks"
+  ],
+  "accessibility_and_testing": {
+    "data_testid_required": true,
+    "keyboard_navigation": "WASD / Arrow keys + Mouse look in 3D exploration, M key for Atlas, Escape to close modals",
+    "reduced_motion_supported": true
+  },
+  "instructions_to_main_agent": "Ensure all .js files in src/ implement the immersive aesthetic specified in design_guidelines.json. Use Tailwind CSS with custom classes matching forest green & antique gold palette. Ensure all interactive elements have data-testid attributes."
+}
