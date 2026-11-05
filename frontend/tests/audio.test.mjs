@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import ts from 'typescript';
+const source=fs.readFileSync(new URL('../src/audio/AudioEngine.ts',import.meta.url),'utf8');
+const code=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;
+let plays=0,instances=0,spoken=[],paused=0,resumed=0,cancelled=0;
+const synth={getVoices:()=>[{name:'Microsoft Zira',lang:'en-US'}],speak:u=>spoken.push(u),pause:()=>paused++,resume:()=>resumed++,cancel:()=>cancelled++};
+globalThis.window=Object.assign(new EventTarget(),{speechSynthesis:synth,setTimeout:()=>0,clearTimeout:()=>{}});globalThis.speechSynthesis=synth;globalThis.SpeechSynthesisUtterance=class{constructor(text){this.text=text;}};
+globalThis.Audio=class extends EventTarget{constructor(src){super();this.src=src;instances++;}load(){}play(){plays++;return Promise.resolve();}pause(){}};
+const {AudioEngine}=await import('data:text/javascript;base64,'+Buffer.from(code).toString('base64'));
+test('theme recording is reused and starts from explicit action',async()=>{const a=new AudioEngine();a.prepareTheme();a.prepareTheme();assert.equal(instances,1);a.startTheme();await Promise.resolve();assert.equal(plays,1);assert.equal(a.themePlaying,true);a.pauseTheme();assert.equal(a.themePlaying,false);a.startTheme();await Promise.resolve();assert.equal(instances,1);assert.equal(plays,2);});
+test('keyless narration selects female device voice, pauses/resumes and cancels previous line',async()=>{const a=new AudioEngine();const first=a.narrate('Hello World');assert.equal(spoken.at(-1).voice.name,'Microsoft Zira');assert.equal(a.voiceActive,true);a.pauseNarration();a.resumeNarration();assert.equal(paused,1);assert.equal(resumed,1);const second=a.narrate('Next line');assert.equal(await first,false);assert.ok(cancelled>=1);spoken.at(-1).onend();assert.equal(await second,true);assert.equal(a.voiceActive,false);});
