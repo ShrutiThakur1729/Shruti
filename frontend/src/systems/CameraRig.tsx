@@ -8,6 +8,7 @@ import { flightPoint, flightDuration } from "./travel";
 import { nearbyInteraction } from "../data/interactions";
 import { input, bindInput } from "./input";
 import { audio } from "../audio/AudioEngine";
+import { interiorZone } from './castleLayout';
 
 export type Journey = { to: WorldId; serial: number };
 
@@ -32,6 +33,7 @@ export default function CameraRig() {
   } | null>(null);
   const landing = useRef<{ position: Point; lookAt: Point } | null>(null);
   const moving = useRef(false);
+  const reportClock=useRef(0);
   const quat = useRef(new THREE.Quaternion());
 
   // place camera at the current world arrival on mount
@@ -100,6 +102,8 @@ export default function CameraRig() {
   useEffect(() => {
     if (blocked) {
       input.keys.clear();
+      input.gestureWalk = false;
+      input.look.dx = 0; input.look.dy = 0;
       velocity.current.set(0, 0, 0);
       audio.stopFootsteps();
       moving.current = false;
@@ -129,6 +133,8 @@ export default function CameraRig() {
   useFrame((_, rawDelta) => {
     const dt = Math.min(rawDelta, 0.1);
     const st = useStore.getState();
+    reportClock.current+=dt;
+    if(reportClock.current>.2){reportClock.current=0;window.dispatchEvent(new CustomEvent('twi-position',{detail:{x:camera.position.x,z:camera.position.z,yaw:angles.current.y}}));}
     const flight = travel.current;
 
     if (flight && st.journey) {
@@ -183,6 +189,7 @@ export default function CameraRig() {
     const k = input.keys;
     let fx = 0;
     let fz = 0;
+    if (input.gestureWalk) fz -= 1;
     if (k.has("KeyW") || k.has("ArrowUp")) fz -= 1;
     if (k.has("KeyS") || k.has("ArrowDown")) fz += 1;
     if (k.has("KeyA") || k.has("ArrowLeft")) fx -= 1;
@@ -198,6 +205,7 @@ export default function CameraRig() {
     velocity.current.lerp(direction, 1 - Math.exp(-dt * 8));
     const next = camera.position.clone().addScaledVector(velocity.current, dt);
     const zone = st.zone;
+    if(st.world==='castle'&&zone){const nextZone=interiorZone(camera.position.x);if(nextZone!==zone)st.set({zone:nextZone});}
     if (canStand(st.world, zone, next.x, next.z)) {
       camera.position.x = next.x;
       camera.position.z = next.z;
