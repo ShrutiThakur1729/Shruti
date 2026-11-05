@@ -8,7 +8,8 @@
     "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 3000",
-    "test": "node --experimental-strip-types --test --test-isolation=none src/systems/travel.test.ts"
+    "test": "node --experimental-strip-types --test --test-isolation=none tests/*.test.*",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "^1.2.2",
