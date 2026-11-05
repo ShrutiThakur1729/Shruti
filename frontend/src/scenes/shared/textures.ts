@@ -141,9 +141,16 @@ export function bookSpreads(book: {
   pages: { heading: string; body: string[] }[];
 }) {
   const spreads: { left: THREE.CanvasTexture; right: THREE.CanvasTexture; index: number }[] = [];
-  for (let i = 0; i < book.pages.length; i += 2) {
-    const leftPage = book.pages[i];
-    const rightPage = book.pages[i + 1];
+  const ctx=makeCanvas(768,960).getContext('2d')!;
+  ctx.font="34px 'Cormorant Garamond', Georgia, serif";
+  const pages:{heading:string;body:string[]}[]=[];
+  for(const page of book.pages){
+    const lines=page.body.flatMap(p=>[...wrapText(ctx,p,618),'']);
+    for(let start=0;start<lines.length;start+=14)pages.push({heading:page.heading+(start?' · continued':''),body:[lines.slice(start,start+14).filter(Boolean).join(' ')]});
+  }
+  for (let i = 0; i < pages.length; i += 2) {
+    const leftPage = pages[i];
+    const rightPage = pages[i + 1];
     spreads.push({
       left: pageTexture(leftPage.heading, leftPage.body, i, book.pages.length, book.title),
       right: rightPage
