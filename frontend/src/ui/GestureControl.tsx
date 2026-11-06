@@ -71,7 +71,7 @@ export default function GestureControl() {
         )}
       </div>
       <p className={`gesture-status ${status}`} data-testid="gesture-status">{statusLabel(status, frame)}</p>
-      <p className="gesture-help">Swipe to look · pinch to select · hold to walk. Atlas: swipe/hold to pan, two hands to zoom. Book: swipe to turn.</p>
+      <p className="gesture-help">Move your open hand gently to look. Swipe left briskly for the next world, right for the previous. Pinch to select; hold to walk. Atlas: drag/pinch to pan, two hands to zoom. Books: swipe to turn.</p>
       {toast && <span className="gesture-toast" data-testid="gesture-toast">{toast}</span>}
       {status === "on" && (
         <button className="gesture-off" data-testid="gesture-recalibrate" onClick={() => controls.current?.recalibrate()}>
