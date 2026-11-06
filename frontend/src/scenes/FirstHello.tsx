@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef, useEffect, useLayoutEffect } from "react";
+import { memo, useMemo, useRef, useEffect, useLayoutEffect, Suspense } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as T from "three";
@@ -281,6 +281,7 @@ function River() {
     };    (mesh as unknown as { tick?: (dt: number) => void }).tick = update;
     return mesh;
   }, []);
+  useEffect(() => () => { water.geometry.dispose(); const m=water.material as T.MeshStandardMaterial; m.normalMap?.dispose(); m.dispose(); }, [water]);
   useFrame((_, dt) => {
     (water as unknown as { tick?: (dt: number) => void }).tick?.(dt);
   });
@@ -517,10 +518,11 @@ export default memo(function FirstHello() {
         shadow-normalBias={0.035}
         shadow-bias={-0.00015}
       />
-      <HeroTree />
-      <Terrain />
       <Mountains />
       <River />
+      <Suspense fallback={null}>
+      <HeroTree />
+      <Terrain />
       <Path />
       <Arch />
       <Bridge />
@@ -537,6 +539,7 @@ export default memo(function FirstHello() {
       ))}
       <Discoveries />
       <Ready />
+      </Suspense>
     </>
   );
 });
