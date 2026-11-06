@@ -30,7 +30,7 @@ export function useSurface(name: string, repeat = 1) {
     `/assets/${name}_nor_gl.jpg`,
     `/assets/${name}_rough.jpg`,
   ]);
-  return useMemo(() => {
+  const material = useMemo(() => {
     const copies = maps.map((m, i) => {
       const t = m.clone();
       t.wrapS = t.wrapT = T.RepeatWrapping;
@@ -47,6 +47,10 @@ export function useSurface(name: string, repeat = 1) {
       normalScale: new T.Vector2(0.7, 0.7),
     });
   }, [maps[0], maps[1], maps[2], repeat]);
+  useEffect(() => () => {
+    material.map?.dispose(); material.normalMap?.dispose(); material.roughnessMap?.dispose(); material.dispose();
+  }, [material]);
+  return material;
 }
 
 export function InstancedModel({
@@ -102,6 +106,7 @@ export function InstancedModel({
     });
     return list;
   }, [scene, height, shared]);
+  useEffect(() => () => parts.forEach(p => p.geometry.dispose()), [parts]);
   const { camera } = useThree();
   const lastCamera = useRef(new T.Vector3(999, 999, 999));
   const update = () => {
@@ -133,7 +138,7 @@ export function InstancedModel({
       root.current.rotation.z = Math.sin(clock.elapsedTime * 0.35) * 0.0009;
   });
   return (
-    <group ref={root}>
+    <group ref={root} dispose={null}>
       {parts.map((p, i) => (
         <instancedMesh
           key={i}
