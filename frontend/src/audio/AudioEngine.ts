@@ -83,7 +83,8 @@ export class AudioEngine {
   private musicTimer: number | null = null;
   private chordIndex = 0;
   private musicGainTarget = 1;
-  private ambientTimers: number[] = [];
+  private ambientTimers = new Set<number>();
+  private musicVoices = new Map<OscillatorNode, GainNode>();
   private ambientSources: AudioScheduledSourceNode[] = [];
   private noiseBuffer: AudioBuffer | null = null;
   private themeEl: HTMLAudioElement | null = null;
@@ -113,6 +114,7 @@ export class AudioEngine {
     u.voice=voices.find(v=>/zira|samantha|jenny|aria|female|susan|hazel/i.test(v.name))??voices[0]??null;
     u.rate=.93;u.volume=this.settings.voice*(this.settings.muted?0:this.settings.master);
     this.duck(true);
+    if (speechSynthesis.paused) speechSynthesis.resume();
     return new Promise(resolve=>{this.narrationResolve=()=>resolve(false);const done=(ok:boolean)=>{if(this.utterance!==u)return;this.utterance=null;this.narrationResolve=null;this.duck(false);resolve(ok);};u.onend=()=>done(true);u.onerror=()=>done(false);speechSynthesis.speak(u);});
   }
   private worldTimer: number | null = null;
@@ -176,7 +178,7 @@ export class AudioEngine {
 
   /* ————— music ————— */
   setWorld(world: WorldId) {
-    if (this.world === world && this.musicTimer) return;
+    if (this.world === world && (this.musicTimer || this.worldTimer || (this.themePlaying && this.ambientLayer))) return;
     this.world = world;
     if(this.worldTimer)window.clearTimeout(this.worldTimer);
     this.stopProceduralMusic();
@@ -245,6 +247,18 @@ export class AudioEngine {
   private stopProceduralMusic() {
     if (this.musicTimer) window.clearInterval(this.musicTimer);
     this.musicTimer = null;
+    if (this.ctx) for (const [osc, gain] of this.musicVoices) {
+      const now = this.ctx.currentTime;
+      gain.gain.cancelScheduledValues(now);
+      gain.gain.setTargetAtTime(0, now, .035);
+      try { osc.stop(now + .15); } catch { /* ended */ }
+    }
+    this.musicVoices.clear();
+  }
+
+  private trackMusic(osc: OscillatorNode, gain: GainNode, filter?: AudioNode) {
+    this.musicVoices.set(osc, gain);
+    osc.onended = () => { this.musicVoices.delete(osc); osc.disconnect(); gain.disconnect(); filter?.disconnect(); };
   }
 
   private scheduleChord() {
@@ -268,6 +282,7 @@ export class AudioEngine {
       gain.gain.linearRampToValueAtTime(0.05, t + dur * 0.35);
       gain.gain.linearRampToValueAtTime(0.0001, t + dur * 1.05);
       osc.connect(filter).connect(gain).connect(this.musicBus!);
+      this.trackMusic(osc, gain, filter);
       osc.start(t);
       osc.stop(t + dur * 1.1);
     });
@@ -284,6 +299,7 @@ export class AudioEngine {
       gain.gain.linearRampToValueAtTime(cfg.bell ? 0.055 : 0.07, start + 0.02);
       gain.gain.exponentialRampToValueAtTime(0.0001, start + (cfg.bell ? 2.4 : 1.4));
       osc.connect(gain).connect(this.musicBus!);
+      this.trackMusic(osc, gain);
       osc.start(start);
       osc.stop(start + (cfg.bell ? 2.5 : 1.5));
     }
@@ -327,8 +343,7 @@ export class AudioEngine {
       mkNoise("highpass", 3800, 0.004, 0.11, 0.003); // leaves
       this.scheduleChirps(layer, 6000);
     } else if (world === "castle") {
-      mkNoise("lowpass", 220, 0.055, 0.04, 0.025); // deep wind around stone
-      mkNoise("bandpass", 520, 0.008, 0.09, 0.005, 2); // whistle through towers
+      // Quiet stone interior: retain bells and music without looping noise or crackle.
       this.scheduleBell(layer, 9000);
     } else {
       mkNoise("lowpass", 320, 0.035, 0.06, 0.015); // evening breeze
@@ -342,7 +357,7 @@ export class AudioEngine {
 
   private stopAmbient() {
     this.ambientTimers.forEach((t) => window.clearTimeout(t));
-    this.ambientTimers = [];
+    this.ambientTimers.clear();
     const sources = this.ambientSources;
     const layer = this.ambientLayer;
     this.ambientSources = [];
@@ -380,10 +395,11 @@ export class AudioEngine {
 
   private repeat(fn: () => void, delay: () => number) {
     const tick = window.setTimeout(() => {
+      this.ambientTimers.delete(tick);
       if (this.ctx && !document.hidden) fn();
       this.repeat(fn, delay);
     }, delay());
-    this.ambientTimers.push(tick);
+    this.ambientTimers.add(tick);
   }
 
   private scheduleChirps(out: AudioNode, first: number) {
@@ -630,7 +646,7 @@ export class AudioEngine {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
-        signal: controller.signal,
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(6000)]),
       });
       if (!res.ok) return serial===this.narrationSerial?this.speakBrowser(text):false;
       const blob = await res.blob();
