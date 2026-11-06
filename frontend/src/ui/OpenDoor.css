@@ -69,3 +69,4 @@
 @media(max-width:430px){.od-immersive .od-links{grid-template-columns:1fr}.od-immersive .od-links>a,.od-immersive .od-links>.od-jls{min-height:48px}}
 @media(min-width:1101px){.od-immersive .od-footer{padding-right:185px}}
 @media(max-width:1100px){.od-immersive .od-footer{padding-bottom:56px}}
+@media(max-width:760px){.od-immersive .od-backdrop{background-size:auto 440px;background-position:left 70px;background-repeat:no-repeat;background-color:#061c12}.od-immersive .od-composition{padding-top:340px}}
