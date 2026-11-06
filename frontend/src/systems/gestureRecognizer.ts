@@ -39,9 +39,9 @@ export class GestureRecognizer {
       this.history.push(p); this.history=this.history.filter(h=>now-h.t<=320);
       const first=this.history[0], dx=p.x-first.x, dy=p.y-first.y, seconds=(now-first.t)/1000;
       const distance=Math.max(Math.abs(dx),Math.abs(dy));
-      if(now>=this.cooldown && distance>0.16 && seconds>0.07 && distance/seconds>0.65) {
+      if(now>=this.cooldown && distance>0.23 && seconds>0.07 && distance/seconds>1) {
         action('swipe', Math.abs(dx)>Math.abs(dy)*1.2?dx:0, Math.abs(dy)>Math.abs(dx)*1.2?dy:0);
-        this.cooldown=now+450; this.history=[];
+        this.cooldown=now+800; this.history=[];
       }
     }
     return out;

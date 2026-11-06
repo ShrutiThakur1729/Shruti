@@ -16,7 +16,8 @@ export async function startGestures(video:HTMLVideoElement,onFrame:(f:GestureFra
   try { hands=await HandLandmarker.createFromOptions(files,{...options,baseOptions:{...options.baseOptions,delegate:'GPU'}}); }
   catch { hands=await HandLandmarker.createFromOptions(files,options); }
  } catch(err) { stream.getTracks().forEach(t=>t.stop());video.srcObject=null;throw err; }
- const recognizer=new GestureRecognizer(); let raf=0,lastVideo=-1,lastFrame=0,lastUi=0,calibration=0,context='';
+ const recognizer=new GestureRecognizer(); let raf=0,lastVideo=-1,lastFrame=0,lastUi=0,calibration=0,context='',lookAfter=0;
+ let center={x:.5,y:.5};
  const reset=()=>{recognizer.reset().forEach(dispatchGesture);input.gestureWalk=false;};
  const loop=()=>{
   raf=requestAnimationFrame(loop); const now=performance.now();
@@ -33,14 +34,18 @@ export async function startGestures(video:HTMLVideoElement,onFrame:(f:GestureFra
   const pinch=Math.hypot(lm[4].x-lm[8].x,lm[4].y-lm[8].y)/size;
   const confidence=detected.handedness[0]?.[0]?.score??0;
   // Require a short neutral open-hand interval after context changes or tracking loss.
-  if(calibration<12){if(pinch>.55&&confidence>.65)calibration++;else calibration=0;}
+  if(calibration<12){if(pinch>.55&&confidence>.65){center={x:(center.x*calibration+x)/(calibration+1),y:(center.y*calibration+y)/(calibration+1)};calibration++;}else calibration=0;}
   let event='';
   if(calibration>=12){
    const other=detected.landmarks[1];
    const actions=recognizer.update({x,y,pinch,confidence,span:other?Math.hypot(lm[9].x-other[9].x,lm[9].y-other[9].y):undefined},now);
-   for(const a of actions){dispatchGesture(a);if(a.type!=='drag'&&a.type!=='zoom')event=a.type;}
+   for(const a of actions){const label=dispatchGesture(a);if(a.type==='swipe')lookAfter=now+400;if(a.type!=='drag'&&a.type!=='zoom')event=label||a.type;}
+   if(!s.panel&&!s.journey&&s.phase==='world'&&pinch>.55&&!other&&now>lookAfter){
+    const dead=(v:number)=>Math.abs(v)<.07?0:Math.sign(v)*Math.min(.3,Math.abs(v)-.07);
+    input.look.dx-=dead(x-center.x)*.07;input.look.dy-=dead(y-center.y)*.05;
+   }
   }
-  if(now-lastUi>100||event){lastUi=now;onFrame({hand:true,pinch:pinch<.5,walking:input.gestureWalk,x,y,calibrating:calibration<12?calibration/12:null,center:null,event});}
+  if(now-lastUi>100||event){lastUi=now;onFrame({hand:true,pinch:pinch<.5,walking:input.gestureWalk,x,y,calibrating:calibration<12?calibration/12:null,center,event});}
  };
  loop();
  return {stop:()=>{cancelAnimationFrame(raf);reset();hands.close();stream.getTracks().forEach(t=>t.stop());video.srcObject=null;},recalibrate:()=>{reset();calibration=0;}};
