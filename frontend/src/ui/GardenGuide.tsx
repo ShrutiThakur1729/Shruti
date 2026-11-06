@@ -7,5 +7,5 @@ export default function GardenGuide(){
  const p=places.find(i=>i.id===selected)!;
  const dx=p.pos[0]-position.x,dz=p.pos[1]-position.z;
  const bearing=Math.atan2(-dx,-dz)-position.yaw;
- return <aside className="garden-guide"><label htmlFor="garden-discovery">Find a little wonder</label><select id="garden-discovery" value={selected} onChange={e=>setSelected(e.target.value)}>{places.map(i=><option key={i.id} value={i.id}>{i.label==='The Gramophone'?'Personal Soundtrack':i.label}</option>)}</select><p><span style={{display:'inline-block',transform:`rotate(${-bearing}rad)`}} aria-hidden>↑</span> {Math.round(Math.hypot(dx,dz))} m · Follow the garden paths</p></aside>;
+ return <details className="garden-guide"><summary>Find a little wonder</summary><label htmlFor="garden-discovery">Garden discovery</label><select id="garden-discovery" value={selected} onChange={e=>setSelected(e.target.value)}>{places.map(i=><option key={i.id} value={i.id}>{i.label==='The Gramophone'?'Personal Soundtrack':i.label}</option>)}</select><p><span style={{display:'inline-block',transform:`rotate(${-bearing}rad)`}} aria-hidden>↑</span> {Math.round(Math.hypot(dx,dz))} m · Follow the garden paths</p></details>;
 }

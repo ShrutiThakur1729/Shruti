@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "../state/store";
 import { getWorld } from "../data/worlds";
 import { audio } from "../audio/AudioEngine";
@@ -13,13 +13,21 @@ export default function NarrationBar() {
   const guided = useStore((s) => s.guided);
   const openPanel = useStore((s) => s.openPanel);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const bar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      document.documentElement.style.setProperty('--world-bar-height', `${bar.current?.offsetHeight || 100}px`);
+    });
+    if (bar.current) observer.observe(bar.current);
+    return () => { observer.disconnect(); document.documentElement.style.removeProperty('--world-bar-height'); };
+  }, []);
   const current = getWorld(world);
   const themeOn = audio.themeAvailable && audio.themePlaying;
 
   const toggleMute = () => setAudio({ muted: !audio_.muted });
 
   return (
-    <footer className="narration-bar" data-testid="narration-bar">
+    <footer ref={bar} className="narration-bar" data-testid="narration-bar">
       <div className="nb-narrator">
         {guided ? (
           <>
@@ -99,6 +107,7 @@ export default function NarrationBar() {
 
       {settingsOpen && (
         <div className="sound-settings" role="dialog" aria-label="Sound settings" data-testid="sound-settings">
+          <button onClick={() => setSettingsOpen(false)} aria-label="Close sound settings">Close ×</button>
           {(
             [
               ["master", "Master volume"],

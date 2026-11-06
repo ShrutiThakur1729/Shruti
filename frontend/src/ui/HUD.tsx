@@ -115,7 +115,7 @@ export function HUD() {
 function TouchControls() {
   const stick = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLDivElement>(null);
-  const [lookId, setLookId] = useState<number | null>(null);
+  const lookId = useRef<number | null>(null);
   const lastLook = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
@@ -142,11 +142,14 @@ function TouchControls() {
       input.joy.x = 0;
       input.joy.y = 0;
       if (knob.current) knob.current.style.transform = "translate(0px, 0px)";
+      el.releasePointerCapture(e.pointerId);
     };
     el.addEventListener("pointermove", onMove);
     el.addEventListener("pointerup", up);
     el.addEventListener("pointercancel", up);
     return () => {
+      input.joy.active = false;
+      input.joy.x = input.joy.y = 0;
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", up);
       el.removeEventListener("pointercancel", up);
@@ -155,28 +158,35 @@ function TouchControls() {
 
   useEffect(() => {
     const down = (e: PointerEvent) => {
+      if (!(e.target instanceof HTMLCanvasElement)) return;
       if (e.clientX < window.innerWidth * 0.35) return; // joystick zone
-      setLookId(e.pointerId);
+      if (lookId.current !== null) return;
+      lookId.current = e.pointerId;
       lastLook.current = { x: e.clientX, y: e.clientY };
     };
     const move = (e: PointerEvent) => {
-      if (e.pointerId !== lookId) return;
+      if (e.pointerId !== lookId.current) return;
       input.look.dx += (e.clientX - lastLook.current.x) * -0.0042;
       input.look.dy += (e.clientY - lastLook.current.y) * -0.0042;
       lastLook.current = { x: e.clientX, y: e.clientY };
     };
     const up = (e: PointerEvent) => {
-      if (e.pointerId === lookId) setLookId(null);
+      if (e.pointerId === lookId.current) lookId.current = null;
     };
     window.addEventListener("pointerdown", down);
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+    const blur = () => { lookId.current = null; input.joy.active = false; input.joy.x = input.joy.y = 0; };
+    window.addEventListener("blur", blur);
     return () => {
       window.removeEventListener("pointerdown", down);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      window.removeEventListener("blur", blur);
     };
-  }, [lookId]);
+  }, []);
 
   return (
     <>
