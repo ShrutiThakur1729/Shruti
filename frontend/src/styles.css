@@ -1421,3 +1421,74 @@ textarea:focus-visible,
 @media(max-width:899px){.atlas-approaches{flex-direction:row;flex-wrap:wrap;overflow:visible}.atlas-approaches .eyebrow,.atlas-approaches p{display:none}.atlas-approaches button{padding:8px;font-size:.9rem}.od-theme{flex-wrap:wrap;gap:10px}.garden-guide{bottom:190px;right:12px}.nb-actions{padding-right:0}.od-links>.od-jls{width:100%}}
 @media(max-width:899px){.illustrated-atlas .map-wrap{flex:0 0 auto;width:100%;height:auto;min-height:0;max-height:none}.illustrated-atlas .map-wrap svg{width:100%;height:auto;aspect-ratio:1000/667;flex:none}.illustrated-atlas .atlas-detail{overflow:visible;max-height:none;flex:none}.illustrated-atlas{height:auto}}
 @media(min-width:900px){.illustrated-atlas .atlas-detail>p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;line-height:1.4}.illustrated-atlas .atlas-detail h2{font-size:1.45rem;margin:6px 0 10px}.illustrated-atlas .atlas-thumbnail{height:90px}.open-door{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto}.od-composition{height:auto;min-height:0}.od-parchment{max-height:100%;overflow-y:auto}.od-form label>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.od-form input,.od-form textarea{margin:0}.od-theme{position:relative;z-index:1}}
+
+/* Phase two: shared mobile controls retain room for the hosting badge and touch input. */
+.narration-bar { bottom: max(52px, env(safe-area-inset-bottom)); }
+.nb-actions { padding-right: 0; flex-wrap: wrap; }
+.nb-narr-controls button, .topbar-actions button, .dialog-close,
+.map-tools button, .destination-list button, .atlas-contact,
+.quick-actions button, .nb-actions button, .book-bar button { min-height: 44px; min-width: 44px; }
+.sound-settings { position: absolute; bottom: calc(100% + 10px); right: 0; width: min(320px, calc(100vw - 32px)); max-height: calc(100dvh - var(--world-bar-height, 100px) - 78px); overflow-y: auto; }
+.sound-settings input[type=range] { min-height: 32px; }
+.illustrated-atlas .map-tools { position: static; padding: 8px; justify-content: center; flex-wrap: wrap; background: #183529; }
+.illustrated-atlas .map-tools button { font-size: 1rem; }
+.book-bar { max-width: calc(100vw - 24px); flex-wrap: wrap; bottom: calc(var(--world-bar-height, 100px) + 64px); }
+.dialog-close { position: sticky; top: 0; float: right; z-index: 3; background: var(--panel-solid); }
+@media (max-width: 1100px) {
+  .narration-bar { flex-wrap: wrap; }
+  .nb-narrator { flex-basis: 100%; }
+  .nb-actions { flex: 1; justify-content: flex-end; }
+  .nb-caption { white-space: normal; overflow-wrap: anywhere; max-height: 5.5em; overflow-y: auto; line-height: 1.35; margin: 4px 0; }
+  .nb-label { font-size: .7rem; letter-spacing: .12em; }
+}
+@media (max-width: 899px) {
+  .scrim { padding: 12px 12px 52px; }
+  .dialog, .dialog.wide { width: 100%; max-width: 100%; max-height: calc(100dvh - 76px); height: auto; padding: 16px; overflow-y: auto; overflow-x: hidden; }
+  .illustrated-atlas { display: flex; flex-direction: column; padding: 8px 0; gap: 14px; }
+  .atlas-approaches button, .destination-list button { min-height: 44px; font-size: 1rem; }
+  .illustrated-atlas .atlas-detail { width: 100%; }
+  .panel-actions { flex-wrap: wrap; }
+  .control-grid { grid-template-columns: 1fr; }
+  .panel-body, .panel-body p, .control-grid span { overflow-wrap: anywhere; }
+  .garden-guide select { min-height: 44px; font-size: 16px; }
+  .joystick { bottom: calc(var(--world-bar-height, 100px) + 70px); left: 14px; }
+  .interact-prompt { bottom: calc(var(--world-bar-height, 100px) + 66px); left: auto; right: 12px; transform: none; max-width: calc(100vw - 156px); }
+  .interact-prompt button { min-height: 48px; width: 100%; font-size: 1rem; }
+}
+@media (max-width: 720px) {
+  .landing { overflow-y: auto; display: flex; flex-direction: column; padding: 28px 14px 64px; }
+  .landing-inner { margin: auto; padding: 24px 12px; min-width: 0; width: 100%; }
+  .landing-title { font-size: 2rem; overflow-wrap: anywhere; }
+  .landing-footer { position: static; flex-wrap: wrap; gap: 12px; justify-content: center; text-align: center; padding: 12px; }
+  .quick-actions { top: 170px; bottom: auto; left: 14px; right: 14px; flex-direction: row; flex-wrap: wrap; gap: 6px; }
+  .quick-actions button { font-size: .9rem; padding: 8px 10px; }
+  .quick-actions kbd { display: none; }
+  .location { max-width: calc(100vw - 28px); }
+  .location p { margin: 4px 0; }
+  .narration-bar { padding: 8px; gap: 6px; }
+  .nb-narrator { gap: 6px; flex-wrap: wrap; }
+  .nb-voice { display: none; }
+  .nb-narr-controls { margin-left: auto; }
+  .nb-actions { justify-content: flex-start; gap: 5px; }
+  .nb-actions button { font-size: .9rem; }
+  .nb-caption { font-size: 1rem; max-height: 4.1em; }
+  .garden-guide { top: 280px; bottom: auto; right: 12px; width: min(200px, calc(100vw - 24px)); padding: 8px; }
+  .garden-guide p { font-size: .9rem; }
+  .gesture-widget { top: 270px; max-height: calc(100dvh - var(--world-bar-height, 100px) - 340px); overflow-y: auto; }
+  .gesture-off { min-height: 44px; font-size: .9rem; }
+  .book-title { width: 100%; font-size: .9rem; }
+  .book-hint { width: 100%; }
+}
+@media (max-height: 560px) and (max-width: 1100px) {
+  .location p { display: none; }
+  .quick-actions { top: 64px; left: auto; right: 12px; width: 180px; }
+  .garden-guide { top: 140px; right: 12px; bottom: auto; }
+  .nb-caption { max-height: 2.7em; }
+  .joystick { width: 90px; height: 90px; bottom: calc(var(--world-bar-height, 100px) + 58px); }
+}
+@media(max-width:899px){.dialog button,.view-controls button,.panel-actions button{min-height:44px}.view-controls{flex-wrap:wrap}.reading-layout>*{min-width:0}.reading-paper{padding:20px 16px}}
+.garden-guide { bottom: calc(var(--world-bar-height, 100px) + 70px); }
+.garden-guide summary { cursor: pointer; min-height: 44px; display: list-item; padding: 8px 0; }
+@media(max-width:720px){.garden-guide{bottom:auto;width:min(200px,calc(100vw - 156px))}.garden-guide label{font-size:.9rem}}
+@media(max-height:560px) and (max-width:1100px){.garden-guide{top:118px;left:14px;right:auto;width:200px;max-height:calc(100dvh - var(--world-bar-height,100px) - 182px);overflow-y:auto}.quick-actions{top:64px;width:auto;max-width:60vw;flex-direction:row;justify-content:flex-end}}
+.landing button { min-height: 48px; }
