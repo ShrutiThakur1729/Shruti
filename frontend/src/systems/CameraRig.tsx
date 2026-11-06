@@ -21,7 +21,13 @@ const ZONE_ENTRY: Record<string, { position: Point; lookAt: Point }> = {
 const CASTLE_DOORSTEP: { position: Point; lookAt: Point } = { position: [150, 6, -198], lookAt: [150, 10, -214] };
 
 export default function CameraRig() {
-  const { camera, gl } = useThree();
+  const { camera, gl, size } = useThree();
+  useEffect(() => {
+    if (camera instanceof THREE.PerspectiveCamera) {
+      camera.fov = size.width < size.height ? 75 : 55;
+      camera.updateProjectionMatrix();
+    }
+  }, [camera, size.width, size.height]);
   const angles = useRef(new THREE.Euler(0, 0, 0, "YXZ"));
   const velocity = useRef(new THREE.Vector3());
   const travel = useRef<{
