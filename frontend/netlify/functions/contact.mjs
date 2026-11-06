@@ -34,7 +34,10 @@ export function contactHandler({ env = process.env, send = fetch } = {}) {
         body: JSON.stringify(payload), signal: AbortSignal.timeout(15000),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || typeof data.id !== 'string') return reply(502, { error: 'The email service could not accept your message. Please retry or email Shruti directly.' });
+      if (!response.ok || typeof data.id !== 'string') {
+        console.error('[contact] Provider rejected message', { status: response.status, name: data.name, message: data.message });
+        return reply(502, { error: 'The email service could not accept your message. Please retry or email Shruti directly.' });
+      }
       return reply(202, { status: 'accepted', message: 'Your message was accepted by the email service for sending to Shruti. Inbox delivery is not yet confirmed.' });
     } catch { return reply(502, { error: 'The email service did not respond. Retry this message safely, or email Shruti directly.' }); }
   };
