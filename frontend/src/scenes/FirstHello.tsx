@@ -487,6 +487,7 @@ function Ready() {
     gl.shadowMap.autoUpdate = false;
     gl.shadowMap.needsUpdate = true;
     scene.userData.assetStatus = "loaded";
+    return () => { gl.shadowMap.autoUpdate = true; gl.shadowMap.needsUpdate = true; };
   }, [gl, scene]);
   return null;
 }

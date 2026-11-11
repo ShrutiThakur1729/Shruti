@@ -489,12 +489,12 @@ function Bridge() {
   const stone = useSurface("cobblestone_floor_08", 3);
   const pieces = useMemo(() => {
     const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
-    for (let z = -210; z < -196; z += 0.9) {
+    for (let z = -210; z < -192; z += 0.9) {
       list.push({ p: new T.Vector3(146.6, 1.9, z), s: new T.Vector3(0.75, 0.5, 0.8), r: 0 });
       list.push({ p: new T.Vector3(153.4, 1.9, z), s: new T.Vector3(0.75, 0.5, 0.8), r: 0 });
       list.push({ p: new T.Vector3(150, 2.0, z), s: new T.Vector3(6.2, 0.24, 0.85), r: 0 });
     }
-    for (const z of [-209.4, -196.6])
+    for (const z of [-209.4, -192.6])
       for (const x of [146.6, 153.4])
         list.push({ p: new T.Vector3(x, 2.7, z), s: new T.Vector3(0.5, 1.2, 0.5), r: 0 });
     return list;

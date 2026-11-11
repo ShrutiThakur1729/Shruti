@@ -140,7 +140,7 @@ export function castleCanStand(x: number, z: number) {
   // moat
   const inMoat = dRect > CASTLE.moatInner && dRect < CASTLE.moatOuter;
   const onBridge =
-    Math.abs(x - CASTLE.bridgeX) < CASTLE.bridgeHalf && z > -210 && z < -196;
+    Math.abs(x - CASTLE.bridgeX) < CASTLE.bridgeHalf && z > -210 && z < -192;
   if (inMoat && !onBridge) return false;
   if (!inWalls && !inMoat && z < -203 && z > -209 && !gateCorridor) return false;
   return true;
@@ -148,7 +148,7 @@ export function castleCanStand(x: number, z: number) {
 
 export function castleWalkHeight(x: number, z: number) {
   const onBridge =
-    Math.abs(x - CASTLE.bridgeX) < CASTLE.bridgeHalf && z > -210 && z < -196;
+    Math.abs(x - CASTLE.bridgeX) < CASTLE.bridgeHalf && z > -210 && z < -192;
   if (onBridge) return 2.1;
   return Math.max(castleGround(x, z), 2.0);
 }
