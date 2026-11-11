@@ -18,7 +18,13 @@ export default function ControlsHelp() {
 
   return (
     <article className="panel-body controls-help" data-testid="controls-help">
-      <h2>Take the scenic route.</h2>
+      <h2>Find your way</h2>
+      <p>Choose a destination on the World Atlas to travel directly. In the Castle, follow the signs to the Gallery for projects or the Library for books. The Open Door has my résumé and contact form.</p>
+      <div className="panel-actions">
+        <button className="btn-primary" onClick={() => openPanel("atlas")}>Open World Atlas ↗</button>
+        <button className="btn-secondary" onClick={() => useStore.getState().set({ phase: "opendoor", panel: null })}>Contact &amp; résumé ↗</button>
+      </div>
+      <h3>Explore on foot</h3>
       {isTouch ? (
         <p>
           Use the joystick to walk, drag anywhere on the right to look around,
@@ -26,10 +32,10 @@ export default function ControlsHelp() {
         </p>
       ) : (
         <p>
-          Click the world to capture your mouse. Follow the path, find the
-          discoveries, or open the atlas whenever curiosity calls.
+          Click the landscape to look around. Use W, A, S and D to walk. When an action appears, press E or select its button. Press Esc to free your mouse.
         </p>
       )}
+      {worldViews.length > 0 && <h3>Visit a viewpoint here</h3>}
       {worldViews.length > 0 && (
         <div className="view-controls" aria-label="Scenic viewpoints">
           {worldViews.map((v) => (
@@ -70,7 +76,7 @@ export default function ControlsHelp() {
           Let me wander <span aria-hidden>→</span>
         </button>
         <button className="btn-secondary" data-testid="replay-welcome" onClick={() => openPanel("welcome")}>
-          Replay the welcome
+          Choose narration or independent exploration
         </button>
       </div>
     </article>
