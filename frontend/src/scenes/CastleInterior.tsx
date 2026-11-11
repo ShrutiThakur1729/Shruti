@@ -13,7 +13,9 @@ export default function CastleInterior({ zone }: { zone: Zone }) {
     <>
       <color attach="background" args={["#100d0a"]} />
       <fog attach="fog" args={["#100d0a", 40, 120]} />
-      <ambientLight intensity={0.55} color="#8a7a5e" />
+      <ambientLight intensity={1.1} color="#d8c5a4" />
+      <hemisphereLight args={['#ffe4ba','#584331',1.6]} />
+      {[-39,39].map(x=><pointLight key={x} position={[x,12.5,-30]} intensity={90} distance={34} decay={2} color="#ffd49a" />)}
       <directionalLight position={[-8, 22, 10]} intensity={0.7} color="#ffe2ae" />
       {quality === "high" && (
         <>
@@ -66,6 +68,7 @@ function CommonRoomShell({ zone }: { zone: Zone }) {
 function Hall() {
   const stone = useSurface("cobblestone_floor_08", 5);
   const glass = useMemo(() => stainedGlassTexture(), []);
+  const wayfinding = useMemo(()=>plaqueTexture('The Upper Wings','← Gallery of Creations · Living Archives →','Follow the grand staircase'),[]);
   const pillars = useMemo(() => {
     const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
     for (const px of [-10, 10])
@@ -143,6 +146,7 @@ function Hall() {
         <meshStandardMaterial color="#5d2a26" roughness={1} />
       </mesh>
       {/* grand staircase */}
+      <mesh position={[0,10.5,-35.7]}><planeGeometry args={[8,2.2]}/><meshStandardMaterial map={wayfinding} emissive="#e5b96b" emissiveIntensity={.3}/></mesh>
       <Stones items={steps} material={stone} />
       <Stones items={railPosts} material={stone} shadows={false} />
       {[-4.4, 4.4].map((x) => (

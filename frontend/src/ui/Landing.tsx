@@ -2,6 +2,7 @@ import { useMemo, useEffect } from "react";
 import { audio } from '../audio/AudioEngine';
 import { useGLTF,useTexture } from '@react-three/drei';
 import { useStore } from "../state/store";
+import "./Orientation.css";
 
 export default function Landing() {
   useEffect(()=>{audio.prepareTheme();useGLTF.preload('/assets/tree-lod.glb');useGLTF.preload('/assets/rocks-lod.glb');useGLTF.preload('/assets/fern-lod.glb');for(const name of ['cobblestone_floor_08','bark_brown_02','forest_ground_04'])for(const type of ['diff','nor_gl','rough'])useTexture.preload(`/assets/${name}_${type}.jpg`);},[]);
@@ -25,14 +26,14 @@ export default function Landing() {
       </div>
       <div className="landing-frame" aria-hidden />
       <div className="landing-inner">
-        <span className="eyebrow">AN INVITATION TO WANDER</span>
+        <span className="eyebrow">SHRUTI THAKUR’S PORTFOLIO</span>
         <h1 className="landing-title">
           THE WORLD INSIDE
           <em>A little universe called Shruti</em>
         </h1>
         <p className="landing-lede">
-          Beyond the familiar, a story is waiting — a valley, a castle and a
-          garden built from one person's real work.
+          I’m Shruti, an Information Technology student building AI applications and accessible software.
+          Step into my valley to meet me, visit the Castle for my work, or find my poems in the Garden.
         </p>
         <button
           className="btn-primary"
@@ -43,9 +44,10 @@ export default function Landing() {
         >
           Enter the Universe <span aria-hidden>↗</span>
         </button>
-        <small className="landing-note">
-          An explorable 3D portfolio · Best with sound · Works on desktop &amp; mobile
-        </small>
+        <nav className="landing-shortcuts" aria-label="Portfolio shortcuts">
+          <button onClick={() => { enter(false); useStore.getState().travelTo("castle"); }}>See my projects <span aria-hidden>↗</span></button>
+          <button onClick={() => useStore.getState().set({ phase: "opendoor", panel: null })}>Contact &amp; résumé <span aria-hidden>↗</span></button>
+        </nav>
       </div>
       <footer className="landing-footer">
         <span>SHRUTI THAKUR</span>

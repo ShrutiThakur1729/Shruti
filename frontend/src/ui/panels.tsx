@@ -204,19 +204,17 @@ export function NotePanel({ id }: { id: string }) {
 
 /* ————— Welcome / onboarding ————— */
 export function WelcomePanel() {
-  const enter = useStore((s) => s.enter);
   const closePanel = useStore((s) => s.closePanel);
   const set = useStore((s) => s.set);
   return (
     <article className="panel-body welcome-panel" data-testid="welcome-panel">
-      <span className="chapter-mark">WELCOME, TRAVELLER!</span>
+      <span className="chapter-mark">THE FIRST HELLO</span>
       <h2>
-        Hello World.<br/><em>Welcome, Traveller!</em>
+        Welcome to my portfolio.
       </h2>
       <p className="lead">
-        This is a little universe called Shruti — a valley for a first hello, a
-        castle that holds the work, and a garden for the quieter things. Every
-        fact here is real.
+        Start with <strong>Meet Shruti</strong> for my introduction. Open the <strong>World Atlas</strong> whenever
+        you want to visit my projects in the Castle or my creative work in the Memory Garden.
       </p>
       <div className="panel-actions welcome-choices">
         <button
@@ -227,7 +225,7 @@ export function WelcomePanel() {
             closePanel();
           }}
         >
-          Take the Guided Journey <span aria-hidden>↗</span>
+          Explore with narration <span aria-hidden>↗</span>
         </button>
         <button
           className="btn-secondary"
@@ -237,12 +235,11 @@ export function WelcomePanel() {
             closePanel();
           }}
         >
-          Explore Independently →
+          Explore on my own →
         </button>
       </div>
       <p className="small-copy">
-        The guided journey speaks using the configured narrator or your device’s English voice
-        with synchronized captions. You can change this anytime from Help.
+        Both options include on-screen directions. You can change narration from Help.
       </p>
     </article>
   );

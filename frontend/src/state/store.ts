@@ -19,6 +19,7 @@ export type PanelId =
   | "note"
   | "guestbook"
   | "catalogue"
+  | "castle-guide"
   | null;
 
 export type AudioSettings = {
@@ -165,8 +166,8 @@ export const useStore = create<WorldState>((set, get) => ({
   },
 
   setZone: (zone, at) => {
-    if(zone==='gallery')at={position:[-39,8.55,-32.5],lookAt:[-39,9,-43]};
-    if(zone==='library')at={position:[39,8.55,-32.5],lookAt:[39,9,-43]};
+    if(zone==='gallery')at={position:[-39,8.55,-15.5],lookAt:[-39,9,-39]};
+    if(zone==='library')at={position:[39,8.55,-15.5],lookAt:[39,9,-39]};
     set({ zone, panel: null, refId: null, fading: true });
     window.dispatchEvent(
       new CustomEvent("twi-teleport", { detail: at })

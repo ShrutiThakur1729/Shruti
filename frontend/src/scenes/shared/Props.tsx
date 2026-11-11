@@ -30,7 +30,7 @@ export function useSurface(name: string, repeat = 1) {
     `/assets/${name}_nor_gl.jpg`,
     `/assets/${name}_rough.jpg`,
   ]);
-  return useMemo(() => {
+  const material = useMemo(() => {
     const copies = maps.map((m, i) => {
       const t = m.clone();
       t.wrapS = t.wrapT = T.RepeatWrapping;
@@ -47,6 +47,10 @@ export function useSurface(name: string, repeat = 1) {
       normalScale: new T.Vector2(0.7, 0.7),
     });
   }, [maps[0], maps[1], maps[2], repeat]);
+  useEffect(() => () => {
+    material.map?.dispose(); material.normalMap?.dispose(); material.roughnessMap?.dispose(); material.dispose();
+  }, [material]);
+  return material;
 }
 
 export function InstancedModel({
@@ -102,6 +106,7 @@ export function InstancedModel({
     });
     return list;
   }, [scene, height, shared]);
+  useEffect(() => () => parts.forEach(p => p.geometry.dispose()), [parts]);
   const { camera } = useThree();
   const lastCamera = useRef(new T.Vector3(999, 999, 999));
   const update = () => {
@@ -133,7 +138,7 @@ export function InstancedModel({
       root.current.rotation.z = Math.sin(clock.elapsedTime * 0.35) * 0.0009;
   });
   return (
-    <group ref={root}>
+    <group ref={root} dispose={null}>
       {parts.map((p, i) => (
         <instancedMesh
           key={i}
@@ -151,7 +156,7 @@ export function Stones({
   material,
   shadows = true,
 }: {
-  items: { p: T.Vector3; s: T.Vector3; r?: number }[];
+  items: { p: T.Vector3; s: T.Vector3; r?: number; c?: T.Color }[];
   material: T.Material;
   shadows?: boolean;
 }) {
@@ -164,10 +169,11 @@ export function Stones({
       obj.rotation.set(0, v.r ?? 0, 0);
       obj.updateMatrix();
       ref.current!.setMatrixAt(i, obj.matrix);
-      const c = new T.Color().setHSL(0.1, 0.07, 0.65 + (i % 7) * 0.045);
+      const c = v.c ?? new T.Color().setHSL(0.1, 0.07, 0.65 + (i % 7) * 0.045);
       ref.current!.setColorAt(i, c);
     });
     ref.current!.instanceMatrix.needsUpdate = true;
+    if (ref.current!.instanceColor) ref.current!.instanceColor.needsUpdate = true;
     ref.current!.computeBoundingSphere();
   }, [items]);
   return (

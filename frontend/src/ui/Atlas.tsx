@@ -26,7 +26,7 @@ export default function Atlas(){
   };window.addEventListener('twi-gesture',handler);return()=>window.removeEventListener('twi-gesture',handler);
  },[zoom,pan]);
  return <div className="atlas-layout illustrated-atlas" data-testid="atlas-panel">
-  <div className="atlas-heading"><span className="eyebrow">A LITTLE UNIVERSE TO EXPLORE</span><h2>The World Atlas</h2><p>Three worlds. A story in every direction.</p></div>
+  <div className="atlas-heading"><h2>The World Atlas</h2><p>Choose a world, then select Visit to travel there.</p></div>
   <nav className="atlas-approaches" aria-label="Scenic approaches"><span className="eyebrow">THE SCENIC ROUTE</span>{views.filter(v=>v.world===selected&&!v.zone).map(v=><button key={v.id} onClick={()=>travelTo(selected,v)}>{v.name} ↗</button>)}<p>Choose a star on the map, or fly to an approach.</p></nav><div className="map-wrap">
    <svg ref={svg} viewBox="0 0 1000 667" aria-label="World atlas — drag to pan, pinch or scroll to zoom" onPointerDown={e=>{pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{
     const old=pointers.current.get(e.pointerId);if(!old)return;
@@ -54,6 +54,21 @@ export default function Atlas(){
    <div className="map-tools"><button aria-label="Zoom in" data-testid="atlas-zoom-in" onClick={()=>setZoom(z=>clamp(z+.2,1,2.8))}>+</button><button aria-label="Zoom out" data-testid="atlas-zoom-out" onClick={()=>setZoom(z=>clamp(z-.2,1,2.8))}>−</button><button data-testid="atlas-reset" onClick={()=>{setZoom(1);setPan([0,0]);}}>Reset map</button></div>
    <span className="map-caption">Drag to explore · pinch or scroll to zoom · choose a golden star</span>
   </div>
-  <aside className="atlas-detail" data-testid="atlas-detail"><span className="eyebrow">DESTINATION {destination.number}</span><h2>{destination.name}</h2><div className={`atlas-thumbnail ${selected}`} role="img" aria-label={`${destination.name} illustration`}/><p>{selected==='castle'?'The heart of my work, projects, experiences and achievements.':selected==='garden'?'A quiet home for creativity, memories, poetry and the things I love.':destination.description}</p><button className="btn-primary" data-testid="atlas-travel-button" onClick={()=>travelTo(selected)}>Travel Here ↗</button><div className="destination-list">{worlds.map(w=><button key={w.id} data-testid={`atlas-select-${w.id}`} aria-pressed={selected===w.id} onClick={()=>select(w.id)}>{w.name}<span>{selected===w.id?'✧':'◇'}</span></button>)}</div><button className="atlas-contact" onClick={()=>useStore.getState().set({phase:'opendoor',panel:null})}>Closing chapter · The Open Door ↗</button></aside>
+  <aside className="atlas-detail" data-testid="atlas-detail">
+    <span className="eyebrow">CHOOSE A WORLD</span>
+    <div className="destination-list atlas-world-picker">
+      {worlds.map(w => (
+        <button key={w.id} data-testid={`atlas-select-${w.id}`} aria-pressed={selected===w.id} onClick={()=>select(w.id)}>
+          <strong>{w.name}</strong>
+          <small>{w.id === 'hello' ? 'About Shruti' : w.id === 'castle' ? 'Projects & experience' : 'Poetry, books & music'}</small>
+        </button>
+      ))}
+    </div>
+    <h2>{destination.name}</h2>
+    <div className={`atlas-thumbnail ${selected}`} role="img" aria-label={`${destination.name} illustration`}/>
+    <p>{selected==='castle' ? 'Enter the gates and climb the stairs to the project gallery and library.' : selected==='garden' ? 'Visit the Poetry Nook, the Reading Nook and the personal soundtrack.' : 'Meet Shruti and read her introduction in the valley.'}</p>
+    <button className="btn-primary" data-testid="atlas-travel-button" onClick={()=>travelTo(selected)}>Visit {destination.name} ↗</button>
+    <button className="atlas-contact" onClick={()=>useStore.getState().set({phase:'opendoor',panel:null})}>The Open Door · Contact &amp; résumé ↗</button>
+  </aside>
  </div>;
 }

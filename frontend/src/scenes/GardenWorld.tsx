@@ -695,8 +695,8 @@ export default function GardenWorld() {
 
 function GardenMarkers(){
  const places=interactions.filter(i=>i.world==='garden'&&i.kind!=='guestbook');
- const textures=useMemo(()=>places.map(i=>plaqueTexture(i.label==='The Gramophone'?'Personal Soundtrack':i.label,'A little wonder','Approach and press E')),[]);
- return <group>{places.map((it,i)=><group key={it.id} position={[it.pos[0],gardenGround(...it.pos),it.pos[1]]}>
+ const textures=useMemo(()=>places.map(i=>plaqueTexture(i.label==='The Gramophone'?'Personal Soundtrack':i.label,'A little wonder','Tap to explore')),[]);
+ return <group>{places.map((it,i)=><group key={it.id} onClick={event => { event.stopPropagation(); useStore.getState().interactNow(it.id); }} position={[it.pos[0],gardenGround(...it.pos),it.pos[1]]}>
   <mesh position={[0,.65,0]}><cylinderGeometry args={[.055,.07,1.3,5]}/><meshStandardMaterial color="#6b4c2e"/></mesh>
   <Billboard position={[0,1.65,0]} follow lockX lockZ><mesh><planeGeometry args={[2.4,1.2]}/><meshStandardMaterial map={textures[i]} transparent emissive="#d8b06b" emissiveIntensity={.25}/></mesh></Billboard>
   <mesh position={[0,2.4,0]}><octahedronGeometry args={[.08]}/><meshStandardMaterial color="#ffe8a6" emissive="#f2c674" emissiveIntensity={1.4}/></mesh>

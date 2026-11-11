@@ -1,0 +1,53 @@
+.landing-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin: 12px auto 0;
+}
+
+.landing-shortcuts button {
+  min-height: 44px;
+  padding: 8px 4px;
+  background: transparent;
+  border: 0;
+  color: var(--gold-bright);
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.location .world-next-step {
+  width: fit-content;
+  padding: 5px 9px;
+  border-left: 2px solid var(--gold);
+  background: rgba(9, 25, 17, .88);
+  color: var(--ivory);
+  font-style: normal;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.illustrated-atlas .atlas-world-picker button {
+  display: grid;
+  justify-content: start;
+  gap: 2px;
+  text-align: left;
+}
+
+.atlas-world-picker strong { font-weight: 600; }
+.atlas-world-picker small { font-size: .9rem; color: var(--ivory-dim); }
+.atlas-world-picker button[aria-pressed="true"] { border-color: var(--gold); }
+
+@media (max-width: 899px) {
+  .illustrated-atlas .atlas-heading { order: 0; }
+  .illustrated-atlas .atlas-detail { order: 1; }
+  .illustrated-atlas .map-wrap { order: 2; }
+  .illustrated-atlas .atlas-approaches { order: 3; }
+}
+
+@media (max-width: 720px) {
+  .location .world-next-step { font-size: .95rem; line-height: 1.25; }
+}
+.quick-actions .route-pick{background:#e5c489;color:#17271c;border-color:#d1a856;font-weight:600}.garden-guide button{display:block;width:100%;min-height:44px;margin-top:8px;white-space:normal}.garden-guide[open]{max-height:min(320px,42dvh);overflow:auto;background:#10271ef7}

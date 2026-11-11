@@ -2,13 +2,23 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as T from "three";
 import { blockGeometry, useSurface, Stones, Banner, DustMotes } from "./shared/Props";
-import { plaqueTexture, bookSpreads, bannerTexture } from "./shared/textures";
+import { plaqueTexture, bookSpreads, bannerTexture, stainedGlassTexture } from "./shared/textures";
 import { projects, books } from "../data/content";
 import { useStore } from "../state/store";
 import { interactionPoint } from "../data/interactions";
 import { audio } from "../audio/AudioEngine";
 
 export const bookBus: { next: () => void; prev: () => void } = { next: () => {}, prev: () => {} };
+
+function WingWindows() {
+  const glass=useMemo(()=>stainedGlassTexture(),[]);
+  useEffect(()=>()=>glass.dispose(),[glass]);
+  return <group>{[-7,0,7].map(x=><group key={x} position={[x,0,-21.4]}>
+    <mesh position={[0,8.5,0]}><planeGeometry args={[3.2,6.5]}/><meshStandardMaterial map={glass} emissiveMap={glass} emissive="#fff1d6" emissiveIntensity={.8}/></mesh>
+    {[-1.7,1.7].map(side=><mesh key={side} position={[side,8.3,.08]}><boxGeometry args={[.22,6.7,.2]}/><meshStandardMaterial color="#a08859" roughness={.7}/></mesh>)}
+    <mesh position={[0,11.5,.08]} scale={[1,1.2,1]}><torusGeometry args={[1.7,.13,6,24,Math.PI]}/><meshStandardMaterial color="#b89c65" roughness={.6}/></mesh>
+  </group>)}</group>;
+}
 
 /* ————————————————————— GALLERY ————————————————————— */
 export function Gallery() {
@@ -19,6 +29,7 @@ export function Gallery() {
   );
   return (
     <group>
+      <WingWindows />
       <mesh position={[0, 0.22, -6]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[6, 26]} />
         <primitive object={rug} attach="material" />
@@ -55,7 +66,7 @@ function Exhibit({
     }
   });
   const plaque = useMemo(
-    () => plaqueTexture(project.name, project.subtitle, "Press E to read"),
+    () => plaqueTexture(project.name, project.subtitle, "Approach to explore · tap or press E"),
     [project.name, project.subtitle]
   );
   return (
@@ -74,6 +85,7 @@ function Exhibit({
       }}>
         <Artefact kind={project.art} />
       </group>
+      <mesh position={[0,3.3,-.8]}><planeGeometry args={[3.1,1.3]}/><meshStandardMaterial map={plaque} emissive="#d8b76b" emissiveIntensity={.25} roughness={.75}/></mesh>
       <mesh position={[0, 0.02, 1.35]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.95, 24]} />
         <meshStandardMaterial color="#e8c88a" emissive="#c9954a" emissiveIntensity={0.35} transparent opacity={0.5} />
@@ -343,6 +355,7 @@ export function Library() {
   }, []);
   return (
     <group>
+      <WingWindows />
       <mesh position={[0, 0.22, -6]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[5.5, 36]} />
         <meshStandardMaterial color="#4c3a4a" roughness={1} />
@@ -402,6 +415,7 @@ function shelfBooksMaterial() {
 }
 
 function FeaturedBook({ book, index }: { book: (typeof books)[number]; index: number }) {
+  const title=useMemo(()=>plaqueTexture(book.title,'The Living Archives','Approach to read'),[book.title]);
   const pos = [
     [-8.2, -14],
     [-3.4, -14],
@@ -447,6 +461,7 @@ function FeaturedBook({ book, index }: { book: (typeof books)[number]; index: nu
         <sphereGeometry args={[0.045, 8, 8]} />
         <meshStandardMaterial color="#ffe9b0" emissive="#ffca6e" emissiveIntensity={2.6} />
       </mesh>
+      <mesh position={[0,-.75,.1]} rotation={[-.3,0,0]}><planeGeometry args={[1.8,.7]}/><meshStandardMaterial map={title} emissive="#c9a75c" emissiveIntensity={.2}/></mesh>
     </group>
   );
 }

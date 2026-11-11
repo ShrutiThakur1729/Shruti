@@ -5,7 +5,7 @@ import commonjs from "@rollup/plugin-commonjs";
 import ts from "typescript";
 import { readFile, mkdir, writeFile, cp } from "node:fs/promises";
 const bundle = await rollup({
-  input: "src/main.tsx",
+  input: process.argv.includes('--qa') ? { app: 'src/main.tsx', qa: 'tests/browser.tsx' } : { app: 'src/main.tsx' },
   plugins: [
     {
       name: "typescript-and-css",
@@ -51,15 +51,16 @@ await mkdir("dist", { recursive: true });
 await bundle.write({
   dir: "dist",
   format: "es",
-  entryFileNames: "app.js",
+  entryFileNames: "[name].js",
   chunkFileNames: "[name]-[hash].js",
 });
 await bundle.close();
-await writeFile("dist/styles.css", await readFile("src/styles.css"));
+await writeFile("dist/styles.css", (await readFile("src/styles.css", 'utf8')) + '\n' + (await readFile('src/ui/OpenDoor.css', 'utf8')));
 const html = (await readFile("index.html", "utf8"))
   .replace("/src/main.tsx", "/app.js")
   .replace("</head>", '<link rel="stylesheet" href="/styles.css"/></head>');
 await writeFile("dist/index.html", html);
+if (process.argv.includes('--qa')) await writeFile('dist/qa.html', html.replace('/app.js', '/qa.js'));
 console.log("Portable production build written to dist/.");
 
 await cp("public", "dist", { recursive: true });

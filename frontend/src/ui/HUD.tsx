@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useStore, isTouch } from "../state/store";
 import { getWorld } from "../data/worlds";
 import { input } from "../systems/input";
 import { findInteraction } from "../data/interactions";
 import GardenGuide from './GardenGuide';
+import { CastleWalkStatus } from './CastleGuide';
 
 export function HUD() {
   const world = useStore((s) => s.world);
@@ -11,7 +12,6 @@ export function HUD() {
   const journey = useStore((s) => s.journey);
   const nearby = useStore((s) => s.nearby);
   const panel = useStore((s) => s.panel);
-  const guided = useStore((s) => s.guided);
   const interact = useStore((s) => s.interactNow);
   const gestures = useStore((s) => s.gestures);
 
@@ -24,6 +24,18 @@ export function HUD() {
         : zone === "library"
           ? "The Living Archives"
           : null;
+
+  const directions = zone === "gallery"
+    ? "Select an exhibit or open the Exhibition catalogue."
+    : zone === "library"
+      ? "Select a book or choose Browse the shelves."
+      : zone === "hall"
+        ? "Climb the stairs. Choose the Gallery on the left or Library on the right."
+        : world === "castle"
+          ? "Follow the bridge to the gates, or choose Explore the Castle."
+          : world === "garden"
+            ? "Choose Visit a Garden place to go straight to a discovery."
+            : "Choose Meet Shruti to start, or open the World Atlas to travel.";
 
   return (
     <>
@@ -54,7 +66,7 @@ export function HUD() {
             onClick={() => useStore.getState().openPanel("controls")}
             aria-label="Help and controls"
           >
-            ?
+            Help
           </button>
         </div>
       </header>
@@ -65,8 +77,8 @@ export function HUD() {
             ? "BETWEEN WORLDS"
             : `CHAPTER ${current.number}${zoneName ? " · " + zoneName.toUpperCase() : ""}`}
         </span>
-        <h1>{journey ? `Towards ${getWorld(journey.to).name}` : current.name}</h1>
-        <p>{journey ? "Follow the wind — a new perspective awaits." : current.subtitle}</p>
+        <h1>{journey ? `Towards ${getWorld(journey.to).name}` : zoneName || current.name}</h1>
+        <p className="world-next-step">{journey ? "You’ll arrive in a moment." : directions}</p>
       </section>
 
       {!journey && !panel && (
@@ -90,7 +102,9 @@ export function HUD() {
       )}
 
       {!journey && !panel && (
-        <div className="quick-actions">
+        <nav className="quick-actions" aria-label="Explore this world">
+          {world === 'castle' && <CastleWalkStatus />}
+          {world==='castle'&&<button data-testid="castle-guide-button" onClick={()=>useStore.getState().openPanel('castle-guide')}>Explore the Castle</button>}
           {(zone==='gallery'||zone==='library')&&<button onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
           <button data-testid="quick-meet" onClick={() => useStore.getState().openPanel("story")}>
             Meet Shruti
@@ -103,7 +117,7 @@ export function HUD() {
               Use hand gestures
             </button>
           )}
-        </div>
+        </nav>
       )}
 
       {isTouch && !panel && !journey && <TouchControls />}
