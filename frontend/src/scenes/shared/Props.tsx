@@ -156,7 +156,7 @@ export function Stones({
   material,
   shadows = true,
 }: {
-  items: { p: T.Vector3; s: T.Vector3; r?: number }[];
+  items: { p: T.Vector3; s: T.Vector3; r?: number; c?: T.Color }[];
   material: T.Material;
   shadows?: boolean;
 }) {
@@ -169,10 +169,11 @@ export function Stones({
       obj.rotation.set(0, v.r ?? 0, 0);
       obj.updateMatrix();
       ref.current!.setMatrixAt(i, obj.matrix);
-      const c = new T.Color().setHSL(0.1, 0.07, 0.65 + (i % 7) * 0.045);
+      const c = v.c ?? new T.Color().setHSL(0.1, 0.07, 0.65 + (i % 7) * 0.045);
       ref.current!.setColorAt(i, c);
     });
     ref.current!.instanceMatrix.needsUpdate = true;
+    if (ref.current!.instanceColor) ref.current!.instanceColor.needsUpdate = true;
     ref.current!.computeBoundingSphere();
   }, [items]);
   return (
