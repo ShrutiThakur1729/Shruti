@@ -12,6 +12,7 @@ import NarrationBar from "./ui/NarrationBar";
 import Atlas from "./ui/Atlas";
 import MeetShruti from "./ui/MeetShruti";
 import ControlsHelp from "./ui/ControlsHelp";
+import CastleGuide from './ui/CastleGuide';
 import {
   ExhibitPanel,
   BookPanel,
@@ -158,6 +159,7 @@ function Panels() {
   if (!panel) return null;
   let body: React.ReactNode = null;
   if (panel === "welcome") body = <WelcomePanel />;
+  else if (panel === 'castle-guide') body = <CastleGuide />;
   else if (panel === "atlas") body = <Atlas />;
   else if (panel === "controls") body = <ControlsHelp />;
   else if (panel === "story") body = <MeetShruti />;
@@ -278,6 +280,7 @@ export default function App() {
       {phase !== "opendoor" && (
         <SceneError>
           <Canvas
+            frameloop={phase==='landing'||(panel&&(panel!=='book'||bookReader))?'demand':'always'}
             shadows
             dpr={[1, 1.5]}
             camera={{ fov: 55, near: 0.1, far: 1200 }}
@@ -285,7 +288,7 @@ export default function App() {
             data-testid="world-canvas"
           >
             <Suspense fallback={null}>
-              <Performance active={!panel} />
+              <Performance active={phase==='world'&&!panel} />
               {phase === "world" && <WorldRoot />}
               <CameraRig />
               {panel === "book" && !bookReader && refId && <BookExperience key={refId} bookId={refId} />}
