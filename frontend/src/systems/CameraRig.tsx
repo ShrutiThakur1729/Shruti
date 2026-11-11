@@ -140,7 +140,7 @@ export default function CameraRig() {
     const dt = Math.min(rawDelta, 0.1);
     const st = useStore.getState();
     reportClock.current+=dt;
-    if(reportClock.current>.2){reportClock.current=0;window.dispatchEvent(new CustomEvent('twi-position',{detail:{x:camera.position.x,z:camera.position.z,yaw:angles.current.y}}));}
+    if(reportClock.current>.2){reportClock.current=0;window.dispatchEvent(new CustomEvent('twi-position',{detail:{x:camera.position.x,y:camera.position.y,z:camera.position.z,yaw:angles.current.y}}));}
     const flight = travel.current;
 
     if (flight && st.journey) {
