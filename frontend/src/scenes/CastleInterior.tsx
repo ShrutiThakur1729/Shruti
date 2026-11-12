@@ -273,9 +273,32 @@ function WingDoor({ x, ry, title }: { x: number; ry: number; title: string }) {
 // end of CastleInterior
 
 function LandingCorridors(){
+ const stone = useSurface('cobblestone_floor_08', 2);
+ const vault = useMemo(() => {
+   // The gallery and library floors sit above the hall floor. Extend the
+   // masonry above both doorways while leaving the walkable arch open.
+   const profile = new T.Shape();
+   profile.moveTo(-2.8, 0);
+   profile.lineTo(-2.45, 0);
+   profile.lineTo(-2.45, 2.65);
+   profile.absarc(0, 2.65, 2.45, Math.PI, 0, true);
+   profile.lineTo(2.45, 0);
+   profile.lineTo(2.8, 0);
+   profile.lineTo(2.8, 14);
+   profile.lineTo(-2.8, 14);
+   profile.closePath();
+   return new T.ExtrudeGeometry(profile, {depth:12, bevelEnabled:false, curveSegments:18});
+ }, []);
+ useEffect(() => () => vault.dispose(), [vault]);
  const west=useMemo(()=>plaqueTexture('West Wing','Gallery of Creations','Walk through the arch'),[]);
  const east=useMemo(()=>plaqueTexture('East Wing','The Living Archives','Walk through the arch'),[]);
  return <group>{[-1,1].map(side=><group key={side}>
+  <mesh position={[side*20-6,6.44,-32.5]} rotation={[0,Math.PI/2,0]} geometry={vault} material={stone}/>
+  <mesh position={[side*20,3.05,-32.5]}><boxGeometry args={[12,6.1,5.6]}/><primitive object={stone} attach="material"/></mesh>
+  {[-4,0,4].map(offset=><group key={offset} position={[side*20+offset,9.09,-32.5]} rotation={[0,Math.PI/2,0]}>
+    <mesh><torusGeometry args={[2.40,.13,6,24,Math.PI]}/><meshStandardMaterial color="#ae9160" roughness={.7}/></mesh>
+    {[-2.4,2.4].map(edge=><mesh key={edge} position={[edge,-1.32,0]}><boxGeometry args={[.2,2.65,.22]}/><meshStandardMaterial color="#92784e"/></mesh>)}
+  </group>)}
   <mesh position={[side*20,6.2,-32.5]} receiveShadow><boxGeometry args={[12,.5,5]}/><meshStandardMaterial color="#65523a" roughness={.9}/></mesh>
   {[-35,-30].map(z=><mesh key={z} position={[side*20,7.05,z]}><boxGeometry args={[12,1.2,.25]}/><meshStandardMaterial color="#4c3928" roughness={.85}/></mesh>)}
   <mesh position={[side*14.5,10.8,-32.5]} rotation={[0,side===-1?Math.PI/2:-Math.PI/2,0]}><planeGeometry args={[4.5,1.8]}/><meshStandardMaterial map={side<0?west:east} emissive="#94713c" emissiveIntensity={.3}/></mesh>
