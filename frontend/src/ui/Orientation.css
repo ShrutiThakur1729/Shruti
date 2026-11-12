@@ -69,6 +69,7 @@ canvas { touch-action: none; }
   border:1px solid #97825b; border-radius:4px; font:inherit; cursor:pointer;
 }
 .more-routes summary { text-align:center; }
+.performance-report { display:none; }
 .more-routes[open] > div { display:grid; gap:4px; margin-top:4px; }
 .quick-actions:has(.more-routes[open]) { max-height:calc(100dvh - var(--world-bar-height,100px) - 155px); overflow:auto; }
 .preview-info, .flight-deck {
@@ -83,8 +84,14 @@ canvas { touch-action: none; }
 .flight-deck label { display:inline-flex; align-items:center; gap:6px; min-height:44px; }
 .flight-deck input { width:80px; }
 @media(max-width:720px) {
-  .quick-actions:has(.more-routes) { max-height:none; }
-  .quick-actions:has(.more-routes[open]) { overflow:auto; max-height:48dvh; background:#10251df5; }
+  .quick-actions:has(.more-routes), .quick-actions:has(.more-routes[open]) {
+    max-height:none; align-items:flex-start; overflow:visible;
+  }
+  .more-routes { position:relative; }
+  .more-routes[open] > div {
+    position:absolute; z-index:2; top:100%; right:0; min-width:145px;
+    max-height:34dvh; overflow:auto; padding:4px; background:#10251df5; border:1px solid #97825b;
+  }
   .flight-deck { top:122px; left:12px; right:auto; }
   main:has(.preview-info) .flight-deck { top:235px; }
 }
