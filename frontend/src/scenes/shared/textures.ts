@@ -55,16 +55,16 @@ export function plaqueTexture(
   ctx.fillStyle = "#e7d5a4";
   ctx.textAlign = "center";
   ctx.font = "600 44px Cinzel, Georgia, serif";
-  ctx.fillText(title.slice(0, 22), 256, 108);
+  ctx.fillText(title, 256, 108, 442);
   if (subtitle) {
     ctx.font = "italic 30px 'Cormorant Garamond', Georgia, serif";
     ctx.fillStyle = "#c9b87f";
-    ctx.fillText(subtitle.slice(0, 34), 256, 158);
+    ctx.fillText(subtitle, 256, 158, 442);
   }
   if (hint) {
     ctx.font = "24px 'Cormorant Garamond', Georgia, serif";
     ctx.fillStyle = "#9a8a5e";
-    ctx.fillText(hint.slice(0, 44), 256, 205);
+    ctx.fillText(hint, 256, 205, 442);
   }
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
@@ -204,27 +204,38 @@ export function stainedGlassTexture(): THREE.CanvasTexture {
   if (cache.has(key)) return cache.get(key)!;
   const c = makeCanvas(256, 512);
   const ctx = c.getContext("2d")!;
-  const cols = ["#2c4a6e", "#7a2e3a", "#3a6e46", "#8a6d33", "#54437a"];
-  const rows = 8,
-    colsN = 4;
-  for (let r = 0; r < rows; r++)
-    for (let col = 0; col < colsN; col++) {
-      ctx.fillStyle = cols[(r * 3 + col) % cols.length];
-      ctx.fillRect((col * 256) / colsN, (r * 512) / rows, 256 / colsN, 512 / rows);
-      ctx.strokeStyle = "rgba(20,16,10,0.85)";
-      ctx.lineWidth = 4;
-      ctx.strokeRect((col * 256) / colsN, (r * 512) / rows, 256 / colsN, 512 / rows);
-    }
-  // leaded centre diamond
-  ctx.fillStyle = "#d8b25f";
-  ctx.beginPath();
-  ctx.moveTo(128, 176);
-  ctx.lineTo(176, 256);
-  ctx.lineTo(128, 336);
-  ctx.lineTo(80, 256);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
+  const arch = new Path2D();
+  arch.moveTo(8,506);
+  arch.lineTo(8,152);
+  arch.quadraticCurveTo(8,65,128,5);
+  arch.quadraticCurveTo(248,65,248,152);
+  arch.lineTo(248,506);
+  arch.closePath();
+  ctx.save();
+  ctx.clip(arch);
+  const light = ctx.createLinearGradient(0,0,230,535);
+  light.addColorStop(0,'#94bcc1'); light.addColorStop(.45,'#297d83'); light.addColorStop(1,'#273d5b');
+  ctx.fillStyle = light;
+  ctx.fillRect(0,0,256,512);
+  const colors = ['#c7d6b2','#5aab9d','#467c92','#a7bdad','#b59778'];
+  for (let row=0; row<14; row++) for (let col=-1; col<7; col++) {
+    const x=col*48+(row%2)*24, y=row*42;
+    ctx.beginPath(); ctx.moveTo(x,y-42); ctx.lineTo(x+24,y); ctx.lineTo(x,y+42); ctx.lineTo(x-24,y); ctx.closePath();
+    ctx.fillStyle=colors[Math.abs(row*7+col*3)%colors.length]; ctx.globalAlpha=.3; ctx.fill(); ctx.globalAlpha=1;
+    ctx.strokeStyle='#345052'; ctx.lineWidth=1.8; ctx.stroke();
+  }
+  ctx.translate(128,155);
+  for (const radius of [91,84,70,34]) {
+    ctx.beginPath(); ctx.arc(0,0,radius,0,Math.PI*2); ctx.lineWidth=radius===84?5:2.5;ctx.strokeStyle='#e8cd8e';ctx.stroke();
+  }
+  for (let petal=0; petal<12; petal++) {
+    ctx.save(); ctx.rotate(petal*Math.PI/6);
+    ctx.beginPath(); ctx.moveTo(0,-14);ctx.bezierCurveTo(-21,-38,-15,-58,0,-74);
+    ctx.bezierCurveTo(15,-58,21,-38,0,-14);ctx.closePath();
+    ctx.fillStyle=petal%2?'#b47675':'#ad9b66';ctx.fill();ctx.strokeStyle='#f0dbaa';ctx.stroke();ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(0,0,15,0,Math.PI*2);ctx.fillStyle='#ffe8a5';ctx.fill();ctx.restore();
+  ctx.strokeStyle='#c6ae76'; ctx.lineWidth=6;ctx.stroke(arch);
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;
   cache.set(key, tex);
