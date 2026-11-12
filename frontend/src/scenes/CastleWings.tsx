@@ -1,3 +1,4 @@
+import { GALLERY_EXHIBITS } from '../systems/castleLayout';
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as T from "three";
@@ -54,8 +55,7 @@ function Exhibit({
   index: number;
   stone: T.Material;
 }) {
-  const x = index < 3 ? -10 : 10;
-  const z = [-16, -6, 4, -11, 1][index];
+  const [x, z] = GALLERY_EXHIBITS[index];
   const open = useStore((s) => s.openPanel);
   const nearby = useStore((s) => s.nearby);
   const spin = useRef<T.Group>(null);
@@ -71,6 +71,11 @@ function Exhibit({
   );
   return (
     <group position={[x, 0, z]}>
+      <group position={[0,2.4,-1.2]}>
+        <mesh><boxGeometry args={[3.4,4.5,.16]}/><meshStandardMaterial color={['#245055','#49415b','#594534','#374d39','#303e60'][index]} roughness={.78}/></mesh>
+        {[-1.72,1.72].map(edge=><mesh key={edge} position={[edge,0,.08]}><boxGeometry args={[.10,4.65,.12]}/><meshStandardMaterial color="#c4a56a" roughness={.55}/></mesh>)}
+        <mesh position={[0,2.3,.08]}><boxGeometry args={[3.55,.16,.20]}/><meshStandardMaterial color="#c4a56a" roughness={.55}/></mesh>
+      </group>
       <mesh position={[0, 0.55, 0]} castShadow receiveShadow>
         <cylinderGeometry args={[0.78, 0.88, 1.1, 14]} />
         <primitive object={stone} attach="material" />
@@ -85,7 +90,7 @@ function Exhibit({
       }}>
         <Artefact kind={project.art} />
       </group>
-      <mesh position={[0,3.3,-.8]}><planeGeometry args={[3.1,1.3]}/><meshStandardMaterial map={plaque} emissive="#d8b76b" emissiveIntensity={.25} roughness={.75}/></mesh>
+      <mesh position={[0,3.3,-.8]}><planeGeometry args={[3.1,1.3]}/><meshBasicMaterial map={plaque} toneMapped={false}/></mesh>
       <mesh position={[0, 0.02, 1.35]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.95, 24]} />
         <meshStandardMaterial color="#e8c88a" emissive="#c9954a" emissiveIntensity={0.35} transparent opacity={0.5} />
@@ -114,7 +119,7 @@ function ShieldArt() {
     <group>
       <mesh rotation={[Math.PI / 2, 0, 0]} castShadow>
         <cylinderGeometry args={[0.72, 0.72, 0.1, 24]} />
-        <meshStandardMaterial color="#39424e" metalness={0.85} roughness={0.3} />
+        <meshStandardMaterial color="#39424e" metalness={0.45} roughness={0.3} />
       </mesh>
       <mesh rotation={[Math.PI / 2, 0, 0]}>
         <torusGeometry args={[0.72, 0.05, 8, 32]} />
@@ -548,11 +553,12 @@ export function BookExperience({ bookId }: { bookId: string }) {
       if(intro.current===0){useStore.setState({panel:null,refId:null,bookClosing:false});return;}
     } else if (intro.current < 1) intro.current = Math.min(1, intro.current + dt / 1.2);
     const e = intro.current * intro.current * (3 - 2 * intro.current);
-    const forward = new T.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
-    const anchor = camera.position
-      .clone()
-      .addScaledVector(forward, 1.55)
-      .add(new T.Vector3(0, -0.22, 0));
+    const view = camera as T.PerspectiveCamera;
+    const depth = 1.85;
+    const halfHeight = Math.tan(T.MathUtils.degToRad(view.fov / 2)) * depth;
+    const fit = Math.min(1, halfHeight * view.aspect * .8 / 1.2, halfHeight * .82);
+    const anchor = new T.Vector3(0, .55 * fit + halfHeight * .13, -depth)
+      .applyQuaternion(camera.quaternion).add(camera.position);
     if (group.current) {
       const from = shelfPos
         ? new T.Vector3(shelfPos[0], shelfPos[1] + 1.5, shelfPos[2])
@@ -560,7 +566,7 @@ export function BookExperience({ bookId }: { bookId: string }) {
       group.current.position.lerpVectors(from, anchor, e);
       group.current.quaternion.copy(camera.quaternion);
       group.current.rotateX(-0.22);
-      const s = 0.55 + 0.45 * e;
+      const s = fit * (0.55 + 0.45 * e);
       group.current.scale.setScalar(s);
     }
     if (coverL.current)

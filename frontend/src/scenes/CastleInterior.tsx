@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as T from "three";
 import { blockGeometry, useSurface, Stones, Banner } from "./shared/Props";
@@ -35,6 +35,15 @@ export default function CastleInterior({ zone }: { zone: Zone }) {
 /* shared floor / walls used by all three rooms */
 function CommonRoomShell({ zone }: { zone: Zone }) {
   const stone = useSurface("cobblestone_floor_08", 9);
+  const wallStone = useMemo(() => {
+    const material = stone.clone();
+    material.color.set('#c4b6a4');
+    material.emissive.set('#4b3d31');
+    material.emissiveIntensity = .24;
+    material.normalScale.set(.3,.3);
+    return material;
+  }, [stone]);
+  useEffect(() => () => wallStone.dispose(), [wallStone]);
   const size = zone === "hall" ? { w: 30, d: 66 } : { w: 28, d: 32 };
   const centerZ=zone==='hall'?-3:-6;
   return (
@@ -45,21 +54,21 @@ function CommonRoomShell({ zone }: { zone: Zone }) {
       </mesh>
       <mesh position={[0, 7, -size.d / 2 - 0.5]} receiveShadow>
         <boxGeometry args={[size.w + 2, 14, 1]} />
-        <meshStandardMaterial color="#2b241d" roughness={1} />
+        <primitive object={wallStone} attach="material" />
       </mesh>
       <mesh position={[0, 7, size.d / 2 + 0.5]} receiveShadow>
         <boxGeometry args={[size.w + 2, 14, 1]} />
-        <meshStandardMaterial color="#2b241d" roughness={1} />
+        <primitive object={wallStone} attach="material" />
       </mesh>
       {[-1,1].map(side=>{
         const passage=zone==='hall'||(zone==='gallery'?side===1:side===-1);
         const gap=zone==='hall'?-29.5:-3.5;
         const segments=passage?[[-size.d/2,gap-2.5],[gap+2.5,size.d/2]]:[[-size.d/2,size.d/2]];
-        return segments.filter(([a,b])=>b>a).map(([a,b],i)=><mesh key={`${side}-${i}`} position={[side*(size.w/2+.5),7,(a+b)/2]}><boxGeometry args={[1,14,b-a]}/><meshStandardMaterial color="#2b241d" roughness={1}/></mesh>);
+        return segments.filter(([a,b])=>b>a).map(([a,b],i)=><mesh key={`${side}-${i}`} position={[side*(size.w/2+.5),7,(a+b)/2]}><boxGeometry args={[1,14,b-a]}/><primitive object={wallStone} attach="material" /></mesh>);
       })}
       <mesh position={[0, 13.4, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <planeGeometry args={[size.w, size.d]} />
-        <meshStandardMaterial color="#241c15" roughness={1} />
+        <meshStandardMaterial color="#756453" emissive="#5e4f42" emissiveIntensity={.18} roughness={.94} />
       </mesh>
     </group>
   );
