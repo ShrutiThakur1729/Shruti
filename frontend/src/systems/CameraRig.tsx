@@ -22,12 +22,16 @@ const CASTLE_DOORSTEP: { position: Point; lookAt: Point } = { position: [150, 6,
 
 export default function CameraRig() {
   const { camera, gl, size } = useThree();
+  const galleryView = useStore(s => s.zone === "gallery");
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
-      camera.fov = size.width < size.height ? 75 : 55;
+      const aspect = size.width / Math.max(1, size.height);
+      const defaultFov = aspect < 1 ? 75 : 55;
+      const galleryFov = THREE.MathUtils.radToDeg(2 * Math.atan(10.8 / (25 * aspect)));
+      camera.fov = galleryView ? Math.min(110, Math.max(defaultFov, galleryFov)) : defaultFov;
       camera.updateProjectionMatrix();
     }
-  }, [camera, size.width, size.height]);
+  }, [camera, size.width, size.height, galleryView]);
   const angles = useRef(new THREE.Euler(0, 0, 0, "YXZ"));
   const velocity = useRef(new THREE.Vector3());
   const travel = useRef<{
@@ -118,21 +122,58 @@ export default function CameraRig() {
   }, [blocked]);
 
   useEffect(() => {
-    const lock = () => {
-      const st = useStore.getState();
-      if (st.phase === "world" && !st.panel && !st.journey && !isTouch())
-        gl.domElement.requestPointerLock()?.catch(() => {});
+    const canvas = gl.domElement;
+    let drag: {id:number; x:number; y:number; moved:number} | null = null;
+    let suppressClick = false;
+    const down = (e: PointerEvent) => {
+      const s = useStore.getState();
+      if (e.button !== 0 || e.pointerType !== 'mouse' || isTouch() || s.phase !== 'world' || s.panel || s.journey) return;
+      if (document.pointerLockElement === canvas) return;
+      drag = {id:e.pointerId,x:e.clientX,y:e.clientY,moved:0};
+      suppressClick = false;
+      canvas.setPointerCapture(e.pointerId);
     };
-    const onMove = (e: MouseEvent) => {
-      if (document.pointerLockElement !== gl.domElement) return;
-      input.look.dx -= e.movementX * 0.0021;
-      input.look.dy -= e.movementY * 0.0021;
+    const move = (e: PointerEvent) => {
+      if (!drag || drag.id !== e.pointerId) return;
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.hypot(dx,dy);
+      if (drag.moved > 4) {
+        input.look.dx -= dx * .004;
+        input.look.dy -= dy * .004;
+        suppressClick = true;
+      }
     };
-    gl.domElement.addEventListener("click", lock);
-    document.addEventListener("mousemove", onMove);
+    const up = () => { drag = null; };
+    const click = (e: MouseEvent) => {
+      if (suppressClick) { e.stopImmediatePropagation(); suppressClick = false; }
+    };
+    const lockedMove = (e: MouseEvent) => {
+      if (document.pointerLockElement === canvas) {
+        input.look.dx -= e.movementX * .0021;
+        input.look.dy -= e.movementY * .0021;
+      }
+    };
+    canvas.addEventListener('pointerdown', down);
+    canvas.addEventListener('pointermove', move);
+    canvas.addEventListener('pointerup', up);
+    canvas.addEventListener('pointercancel', up);
+    canvas.addEventListener('lostpointercapture', up);
+    canvas.addEventListener('click', click, true);
+    canvas.addEventListener('dblclick', lock);
+    function lock() {
+      const s=useStore.getState();
+      if (!isTouch() && s.phase==='world' && !s.panel && !s.journey) canvas.requestPointerLock?.()?.catch(()=>{});
+    }
+    document.addEventListener('mousemove', lockedMove);
     return () => {
-      gl.domElement.removeEventListener("click", lock);
-      document.removeEventListener("mousemove", onMove);
+      canvas.removeEventListener('pointerdown', down);
+      canvas.removeEventListener('pointermove', move);
+      canvas.removeEventListener('pointerup', up);
+      canvas.removeEventListener('pointercancel', up);
+      canvas.removeEventListener('lostpointercapture', up);
+      canvas.removeEventListener('click', click, true);
+      canvas.removeEventListener('dblclick', lock);
+      document.removeEventListener('mousemove', lockedMove);
     };
   }, [gl]);
 
