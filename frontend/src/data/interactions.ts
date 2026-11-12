@@ -1,6 +1,6 @@
 import type { Point, WorldId } from "./worlds";
 import type { Zone } from "../state/store";
-import { WING_ORIGIN } from '../systems/castleLayout';
+import { WING_ORIGIN, GALLERY_EXHIBITS } from '../systems/castleLayout';
 
 export type InteractKind =
   | "story"
@@ -114,10 +114,7 @@ const localInteractions: Interaction[] = [
       kind: "exhibit" as InteractKind,
       label: refId,
       hint: "View this exhibit",
-      pos: [
-        i < 3 ? -10 : 10,
-        i === 0 ? -16 : i === 1 ? -6 : i === 2 ? 4 : i === 3 ? -11 : 1,
-      ] as [number, number],
+      pos: GALLERY_EXHIBITS[i],
       refId,
       radius: 4,
     }),
