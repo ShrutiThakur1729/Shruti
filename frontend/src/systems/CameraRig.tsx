@@ -9,6 +9,7 @@ import { nearbyInteraction } from "../data/interactions";
 import { input, bindInput } from "./input";
 import { audio } from "../audio/AudioEngine";
 import { interiorZone } from './castleLayout';
+import { flightLimits, useFlight } from './freeFlight';
 
 export type Journey = { to: WorldId; serial: number };
 
@@ -34,6 +35,14 @@ export default function CameraRig() {
   }, [camera, size.width, size.height, galleryView]);
   const angles = useRef(new THREE.Euler(0, 0, 0, "YXZ"));
   const velocity = useRef(new THREE.Vector3());
+  const takeoff = useRef<THREE.Vector3 | null>(null);
+  const pendingLift = useRef(0);
+  function resetFlight() {
+    takeoff.current = null;
+    pendingLift.current = 0;
+    velocity.current.set(0, 0, 0);
+    useFlight.setState({active:false, lift:0});
+  }
   const travel = useRef<{
     start: Point;
     time: number;
@@ -53,6 +62,7 @@ export default function CameraRig() {
     camera.position.fromArray(w.arrival);
     camera.lookAt(...w.lookAt);
     angles.current.setFromQuaternion(camera.quaternion, "YXZ");
+    return resetFlight;
   }, [camera]);
 
   // arrive at new world
@@ -73,6 +83,7 @@ export default function CameraRig() {
   // interior teleports
   useEffect(() => {
     const handler = (e: Event) => {
+      resetFlight();
       const detail = (e as CustomEvent).detail as {
         position: Point;
         lookAt: Point;
@@ -89,6 +100,7 @@ export default function CameraRig() {
   // journey start
   useEffect(() => {
     if (!journey) return;
+    resetFlight();
     const dest = getWorld(journey.to);
     const v = journey.view;
     const target = !v
@@ -127,7 +139,7 @@ export default function CameraRig() {
     let suppressClick = false;
     const down = (e: PointerEvent) => {
       const s = useStore.getState();
-      if (e.button !== 0 || e.pointerType !== 'mouse' || isTouch() || s.phase !== 'world' || s.panel || s.journey) return;
+      if (e.button !== 0 || drag || s.phase !== 'world' || s.panel || s.journey) return;
       if (document.pointerLockElement === canvas) return;
       drag = {id:e.pointerId,x:e.clientX,y:e.clientY,moved:0};
       suppressClick = false;
@@ -143,7 +155,7 @@ export default function CameraRig() {
         suppressClick = true;
       }
     };
-    const up = () => { drag = null; };
+    const up = (e: PointerEvent) => { if (drag?.id === e.pointerId) drag = null; };
     const click = (e: MouseEvent) => {
       if (suppressClick) { e.stopImmediatePropagation(); suppressClick = false; }
     };
@@ -244,6 +256,45 @@ export default function CameraRig() {
     if (input.joy.active) {
       fx += input.joy.x;
       fz += input.joy.y;
+    }
+    const flightMode = useFlight.getState();
+    const preview = flightMode.preview;
+    if (preview?.paused) return;
+    if (flightMode.active || preview || takeoff.current) {
+      if (moving.current) { moving.current = false; audio.stopFootsteps(); }
+      if (st.nearby) st.set({nearby:null});
+      camera.quaternion.slerp(quat.current.setFromEuler(angles.current), 1 - Math.exp(-dt * 20));
+      if (!flightMode.active && takeoff.current) {
+        camera.position.lerp(takeoff.current, 1 - Math.exp(-dt * 7));
+        if (camera.position.distanceTo(takeoff.current) < .08) {
+          camera.position.copy(takeoff.current);
+          resetFlight();
+        }
+        return;
+      }
+      if (flightMode.active && !takeoff.current) takeoff.current = camera.position.clone();
+      const direction = new THREE.Vector3(fx, 0, fz);
+      if (direction.lengthSq() > 1) direction.normalize();
+      const speed = flightMode.active ? flightMode.speed : 5;
+      if (flightMode.active) {
+        direction.applyEuler(angles.current);
+        direction.y += Number(k.has('Space')) - Number(k.has('ControlLeft') || k.has('ControlRight'));
+      } else direction.applyAxisAngle(new THREE.Vector3(0,1,0), angles.current.y);
+      velocity.current.lerp(direction.multiplyScalar(speed), 1 - Math.exp(-dt * 6));
+      camera.position.addScaledVector(velocity.current, dt);
+      if (flightMode.lift) {
+        pendingLift.current += flightMode.lift;
+        useFlight.setState({lift:0});
+      }
+      const step = THREE.MathUtils.clamp(pendingLift.current,-speed * dt,speed * dt);
+      pendingLift.current -= step;
+      const bounds = preview ? {left:preview.x-9,right:preview.x+9,far:preview.z-9,near:preview.z+9,ceiling:10} : flightLimits[st.world];
+      const p = camera.position;
+      p.x = THREE.MathUtils.clamp(p.x,bounds.left,bounds.right);
+      p.z = THREE.MathUtils.clamp(p.z,bounds.far,bounds.near);
+      const floor = preview?.floor ?? getGround(st.world, null, p.x, p.z);
+      p.y = flightMode.active ? THREE.MathUtils.clamp(p.y+step,floor+2.1,floor+bounds.ceiling) : floor+2.1;
+      return;
     }
     const speed = (k.has("ShiftLeft") || k.has("ShiftRight") ? 12 : 6) * (st.world === "castle" && !st.zone ? 1.15 : 1);
     const direction = new THREE.Vector3(fx, 0, fz);
