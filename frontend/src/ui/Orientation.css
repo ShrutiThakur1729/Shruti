@@ -62,3 +62,33 @@
 main:has(.book-bar) .book-bar{bottom:76px;width:max-content;max-width:calc(100vw - 24px);justify-content:center;background:#11291ff5}
 main:has(.book-bar) .book-hint{display:none}
 @media(max-width:760px){main:has(.book-bar) .book-bar .book-title{display:none}.book-bar button{min-height:44px}}
+
+canvas { touch-action: none; }
+.more-routes summary, .flight-deck button, .preview-info button {
+  min-height:44px; padding:10px 14px; background:#13271feb; color:var(--ivory);
+  border:1px solid #97825b; border-radius:4px; font:inherit; cursor:pointer;
+}
+.more-routes summary { text-align:center; }
+.more-routes[open] > div { display:grid; gap:4px; margin-top:4px; }
+.quick-actions:has(.more-routes[open]) { max-height:calc(100dvh - var(--world-bar-height,100px) - 155px); overflow:auto; }
+.preview-info, .flight-deck {
+  position:fixed; z-index:12; background:#10251df5; color:var(--ivory); border:1px solid #a18753;
+  border-radius:7px; box-shadow:0 6px 18px #0004; padding:10px; max-width:calc(100vw - 24px);
+}
+.preview-info { top:70px; left:12px; width:300px; }
+.preview-info small, .garden-guide label { display:block; margin:3px 0 6px; }
+.preview-info p { margin:8px 0; }
+.preview-info button + button { margin-left:6px; }
+.flight-deck { top:70px; right:12px; display:flex; align-items:center; flex-wrap:wrap; gap:5px; }
+.flight-deck label { display:inline-flex; align-items:center; gap:6px; min-height:44px; }
+.flight-deck input { width:80px; }
+@media(max-width:720px) {
+  .quick-actions:has(.more-routes) { max-height:none; }
+  .quick-actions:has(.more-routes[open]) { overflow:auto; max-height:48dvh; background:#10251df5; }
+  .flight-deck { top:122px; left:12px; right:auto; }
+  main:has(.preview-info) .flight-deck { top:235px; }
+}
+@media(max-height:560px) {
+  .location h1 { margin-block:2px; }
+  main:has(.more-routes) .location .world-next-step { display:none; }
+}

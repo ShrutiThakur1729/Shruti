@@ -1,9 +1,11 @@
 import { useStore } from "../state/store";
 import { views } from "../data/views";
+import { toggleFlight, useFlight } from '../systems/freeFlight';
 
 export default function ControlsHelp() {
   const world = useStore((s) => s.world);
   const zone = useStore((s) => s.zone);
+  const flying = useFlight(s => s.active);
   const openPanel = useStore((s) => s.openPanel);
   const setZone = useStore((s) => s.setZone);
   const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -27,14 +29,14 @@ export default function ControlsHelp() {
       <h3>Explore on foot</h3>
       {isTouch ? (
         <p>
-          Use the joystick to walk, drag anywhere on the right to look around,
-          and the ✦ button to interact with what's in front of you.
+          Use the joystick to walk, drag the landscape to look around, and tap a discovery to explore it.
         </p>
       ) : (
         <p>
           Drag the landscape to look around, or double-click for free mouse look. Use W, A, S and D to walk. When an action appears, press E or select its button. Press Esc to free your mouse.
         </p>
       )}
+      {!zone && <button className="btn-secondary" onClick={() => { toggleFlight(!flying); useStore.getState().closePanel(); }}>{flying ? 'Return to walking' : 'Try flying'}</button>}
       {worldViews.length > 0 && <h3>Visit a viewpoint here</h3>}
       {worldViews.length > 0 && (
         <div className="view-controls" aria-label="Scenic viewpoints">

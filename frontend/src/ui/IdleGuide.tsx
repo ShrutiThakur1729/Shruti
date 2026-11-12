@@ -15,7 +15,7 @@ export default function IdleGuide() {
       : panel === 'catalogue' ? '.dialog .destination-list button'
       : panel === 'welcome' ? '.welcome-choices button'
       : phase === 'landing' ? '[data-testid="enter-universe-button"]'
-      : world === 'garden' ? '.garden-guide:not([open]) summary, .garden-guide[open] select'
+      : world === 'garden' ? '.garden-guide select'
       : world === 'castle' ? (zone === 'gallery' || zone === 'library' ? '[data-guide="catalogue"]' : '.quick-actions .route-pick')
       : '[data-testid="quick-meet"]';
     let timer = 0;
