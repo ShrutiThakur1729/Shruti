@@ -32,7 +32,7 @@ export default function ControlsHelp() {
         </p>
       ) : (
         <p>
-          Click the landscape to look around. Use W, A, S and D to walk. When an action appears, press E or select its button. Press Esc to free your mouse.
+          Drag the landscape to look around, or double-click for free mouse look. Use W, A, S and D to walk. When an action appears, press E or select its button. Press Esc to free your mouse.
         </p>
       )}
       {worldViews.length > 0 && <h3>Visit a viewpoint here</h3>}
@@ -56,7 +56,7 @@ export default function ControlsHelp() {
               ]
             : [
                 ["W A S D", "Move through the world"],
-                ["Mouse", "Look around after clicking the world"],
+                ["Mouse", "Drag the landscape to look around"],
                 ["Shift", "Walk faster"],
                 ["E / Click", "Interact with a nearby discovery"],
                 ["M", "Open or close the world atlas"],

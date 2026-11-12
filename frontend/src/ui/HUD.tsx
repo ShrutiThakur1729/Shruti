@@ -56,7 +56,7 @@ export function HUD() {
             !panel && (
               <span className="controls-hint" data-testid="controls-hint">
                 {isTouch ? "Drag to look · joystick to walk" : (
-                  <>Click the world to look · <kbd>W A S D</kbd> wander · <kbd>E</kbd> interact</>
+                  <>Drag to look around · <kbd>W A S D</kbd> wander · <kbd>E</kbd> interact</>
                 )}
               </span>
             )
@@ -105,7 +105,7 @@ export function HUD() {
         <nav className="quick-actions" aria-label="Explore this world">
           {world === 'castle' && <CastleWalkStatus />}
           {world==='castle'&&<button data-testid="castle-guide-button" onClick={()=>useStore.getState().openPanel('castle-guide')}>Explore the Castle</button>}
-          {(zone==='gallery'||zone==='library')&&<button onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
+          {(zone==='gallery'||zone==='library')&&<button data-guide="catalogue" onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
           <button data-testid="quick-meet" onClick={() => useStore.getState().openPanel("story")}>
             Meet Shruti
           </button>
@@ -173,7 +173,6 @@ function TouchControls() {
   useEffect(() => {
     const down = (e: PointerEvent) => {
       if (!(e.target instanceof HTMLCanvasElement)) return;
-      if (e.clientX < window.innerWidth * 0.35) return; // joystick zone
       if (lookId.current !== null) return;
       lookId.current = e.pointerId;
       lastLook.current = { x: e.clientX, y: e.clientY };
