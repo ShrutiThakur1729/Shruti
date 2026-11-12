@@ -7,7 +7,8 @@ export const mapLocations: Record<WorldId,[number,number]>={hello:[250,355],cast
 const clamp=(n:number,min:number,max:number)=>Math.max(min,Math.min(max,n));
 export default function Atlas(){
  const current=useStore(s=>s.world),travelTo=useStore(s=>s.travelTo);
- const [selected,select]=useState<WorldId>(current),[zoom,setZoom]=useState(1),[pan,setPan]=useState<[number,number]>([0,0]);
+ const selected = current;
+ const [zoom,setZoom]=useState(1),[pan,setPan]=useState<[number,number]>([0,0]);
  const svg=useRef<SVGSVGElement>(null),pointers=useRef(new Map<number,{x:number;y:number}>()),lastDistance=useRef(0);
  const destination=getWorld(selected);
  const move=(dx:number,dy:number)=>setPan(([x,y])=>[clamp(x+dx,-650,650),clamp(y+dy,-430,430)]);
@@ -21,12 +22,12 @@ export default function Atlas(){
     const x=((a.x*window.innerWidth-r.left)/r.width*1000-500-pan[0])/zoom+500;
     const y=((a.y*window.innerHeight-r.top)/r.height*667-333.5-pan[1])/zoom+333.5;
     const nearest=worlds.map(w=>({id:w.id,d:Math.hypot(x-mapLocations[w.id][0],y-mapLocations[w.id][1])})).sort((a,b)=>a.d-b.d)[0];
-    if(nearest.d<100)select(nearest.id);
+    if(nearest.d<100)travelTo(nearest.id);
    }
   };window.addEventListener('twi-gesture',handler);return()=>window.removeEventListener('twi-gesture',handler);
- },[zoom,pan]);
+ },[zoom,pan,travelTo]);
  return <div className="atlas-layout illustrated-atlas" data-testid="atlas-panel">
-  <div className="atlas-heading"><h2>The World Atlas</h2><p>Choose a world, then select Visit to travel there.</p></div>
+  <div className="atlas-heading"><h2>The World Atlas</h2><p>Select a world to travel there.</p></div>
   <nav className="atlas-approaches" aria-label="Scenic approaches"><span className="eyebrow">THE SCENIC ROUTE</span>{views.filter(v=>v.world===selected&&!v.zone).map(v=><button key={v.id} onClick={()=>travelTo(selected,v)}>{v.name} ↗</button>)}<p>Choose a star on the map, or fly to an approach.</p></nav><div className="map-wrap">
    <svg ref={svg} viewBox="0 0 1000 667" aria-label="World atlas — drag to pan, pinch or scroll to zoom" onPointerDown={e=>{pointers.current.set(e.pointerId,{x:e.clientX,y:e.clientY});e.currentTarget.setPointerCapture(e.pointerId);}} onPointerMove={e=>{
     const old=pointers.current.get(e.pointerId);if(!old)return;
@@ -42,7 +43,7 @@ export default function Atlas(){
      <path d="M250 355 C390 320 350 455 580 510 M250 355 C490 410 540 190 800 260" fill="none" stroke="#ffda72" strokeWidth="8" filter="url(#route-glow)"/>
      <path className="atlas-golden-route" d="M250 355 C390 320 350 455 580 510 M250 355 C490 410 540 190 800 260" fill="none" stroke="#fff6c8" strokeWidth="3" strokeDasharray="7 6" strokeLinecap="round"/>
      <text x="425" y="420" fill="#fff1bb" fontSize="22" aria-hidden>➤</text><text x="560" y="275" fill="#fff1bb" fontSize="22" aria-hidden>➤</text>
-     {worlds.map(w=>{const[x,y]=mapLocations[w.id];return <g key={w.id} transform={`translate(${x} ${y})`} role="button" tabIndex={0} aria-label={w.name} aria-pressed={w.id===selected} data-testid={`atlas-marker-${w.id}`} className={`atlas-landmark ${selected===w.id?'selected':''}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>select(w.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(w.id);}}}>
+     {worlds.map(w=>{const[x,y]=mapLocations[w.id];return <g key={w.id} transform={`translate(${x} ${y})`} role="button" tabIndex={0} aria-label={w.name} aria-pressed={w.id===selected} data-testid={`atlas-marker-${w.id}`} className={`atlas-landmark ${selected===w.id?'selected':''}`} onPointerDown={e=>e.stopPropagation()} onClick={()=>travelTo(w.id)} onKeyDown={e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();travelTo(w.id);}}}>
       <circle r="26" fill="#805824" fillOpacity=".35"/><circle r="19" fill="#a87936" stroke="#fff1bd" strokeWidth="2"/><path d="M0 -16 L4 -4 16 0 4 4 0 16 -4 4 -16 0 -4 -4 Z" fill="#fff1bd"/>
       <rect x="-102" y="29" width="204" height="33" rx="3" fill="#102b21" stroke="#d4b26b"/><text y="51" textAnchor="middle" fill="#fff0c3" fontSize="17">{w.name}</text>
       {current===w.id&&<text y="-35" textAnchor="middle" fill="#fff9df" stroke="#3f341f" strokeWidth="3" paintOrder="stroke" fontSize="13">✧ YOU ARE HERE</text>}
@@ -58,7 +59,7 @@ export default function Atlas(){
     <span className="eyebrow">CHOOSE A WORLD</span>
     <div className="destination-list atlas-world-picker">
       {worlds.map(w => (
-        <button key={w.id} data-testid={`atlas-select-${w.id}`} aria-pressed={selected===w.id} onClick={()=>select(w.id)}>
+        <button key={w.id} data-testid={`atlas-select-${w.id}`} aria-pressed={selected===w.id} onClick={()=>travelTo(w.id)}>
           <strong>{w.name}</strong>
           <small>{w.id === 'hello' ? 'About Shruti' : w.id === 'castle' ? 'Projects & experience' : 'Poetry, books & music'}</small>
         </button>
@@ -67,7 +68,6 @@ export default function Atlas(){
     <h2>{destination.name}</h2>
     <div className={`atlas-thumbnail ${selected}`} role="img" aria-label={`${destination.name} illustration`}/>
     <p>{selected==='castle' ? 'Enter the gates and climb the stairs to the project gallery and library.' : selected==='garden' ? 'Visit the Poetry Nook, the Reading Nook and the personal soundtrack.' : 'Meet Shruti and read her introduction in the valley.'}</p>
-    <button className="btn-primary" data-testid="atlas-travel-button" onClick={()=>travelTo(selected)}>Visit {destination.name} ↗</button>
     <button className="atlas-contact" onClick={()=>useStore.getState().set({phase:'opendoor',panel:null})}>The Open Door · Contact &amp; résumé ↗</button>
   </aside>
  </div>;

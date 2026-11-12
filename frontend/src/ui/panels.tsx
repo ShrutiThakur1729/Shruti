@@ -102,12 +102,8 @@ export function BookPanel({ id }: { id: string }) {
           Next →
         </button>
       </div>
-      {!isTouch && (
-        <p className="small-copy">
-          This is the accessible reader. Close to return to the shelf.
-        </p>
-      )}
       <div className="panel-actions">
+        <button className="btn-secondary" onClick={() => useStore.setState({ bookReader: false })}>View 3D book</button>
         <button className="btn-secondary" data-testid="book-close" onClick={() => useStore.getState().closePanel()}>
           Close Book
         </button>

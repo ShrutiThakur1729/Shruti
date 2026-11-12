@@ -1,3 +1,4 @@
+import IdleGuide from './ui/IdleGuide';
 import React, { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Canvas } from "@react-three/fiber";
 import { useStore, isTouch } from "./state/store";
@@ -302,11 +303,12 @@ export default function App() {
       <div className="vignette" aria-hidden />
       <div className={`fade-layer ${fading ? "on" : ""}`} aria-hidden />
 
+      <IdleGuide />
       {phase === "landing" && <Landing />}
       {phase === "world" && (
         <>
-          <HUD />
-          <NarrationBar />
+          {panel !== "book" && <HUD />}
+          {panel !== "book" && <NarrationBar />}
           <Panels />
           {panel === 'book' && !bookReader && <BookOverlay />}
           {gestures && <GestureControl />}

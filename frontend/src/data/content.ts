@@ -21,7 +21,6 @@ export const education = [
     institution: "A. P. Shah Institute of Technology",
     qualification: "B.E. in Information Technology",
     detail: "Honors in Artificial Intelligence & Machine Learning",
-    grade: "CGPA 9.35 (Semester V)",
     period: "Expected graduation May 2027",
   },
   {
@@ -251,7 +250,7 @@ export const books: Book[] = [
         heading: "A. P. Shah Institute of Technology",
         body: [
           "B.E. in Information Technology, with Honors in Artificial Intelligence & Machine Learning.",
-          "CGPA 9.35 (Semester V) · Expected graduation May 2027.",
+          "Expected graduation May 2027.",
         ],
       },
       {

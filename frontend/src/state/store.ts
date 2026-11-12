@@ -127,7 +127,7 @@ export const useStore = create<WorldState>((set, get) => ({
   fading: false,
   themeReady: false,
   gestures: false,
-  bookReader: isTouch,
+  bookReader: true,
   bookClosing: false,
 
   set: (partial) => {
@@ -138,7 +138,7 @@ export const useStore = create<WorldState>((set, get) => ({
 
   openPanel: (panel, refId = null) => {
     document.exitPointerLock?.();
-    set({ panel, refId, bookReader: isTouch, bookClosing: false });
+    set({ panel, refId, bookReader: true, bookClosing: false });
   },
 
   closePanel: () => {
@@ -166,7 +166,12 @@ export const useStore = create<WorldState>((set, get) => ({
   },
 
   setZone: (zone, at) => {
-    if(zone==='gallery')at={position:[-39,8.55,-15.5],lookAt:[-39,9,-39]};
+    if (zone === 'gallery') {
+      const aspect = window.innerWidth / Math.max(1, window.innerHeight);
+      const halfFov = (aspect < 1 ? 75 : 55) * Math.PI / 360;
+      const distance = Math.max(13, Math.min(25, 10.8 / (aspect * Math.tan(halfFov))));
+      at = {position: [-39,8.55,-40.7 + distance], lookAt: [-39,9,-40.7]};
+    }
     if(zone==='library')at={position:[39,8.55,-15.5],lookAt:[39,9,-39]};
     set({ zone, panel: null, refId: null, fading: true });
     window.dispatchEvent(

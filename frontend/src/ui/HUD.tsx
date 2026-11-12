@@ -5,6 +5,8 @@ import { input } from "../systems/input";
 import { findInteraction } from "../data/interactions";
 import GardenGuide from './GardenGuide';
 import { CastleWalkStatus } from './CastleGuide';
+import FlightDeck, { LoadingStatus } from './FlightDeck';
+import { useFlight } from '../systems/freeFlight';
 
 export function HUD() {
   const world = useStore((s) => s.world);
@@ -14,6 +16,9 @@ export function HUD() {
   const panel = useStore((s) => s.panel);
   const interact = useStore((s) => s.interactNow);
   const gestures = useStore((s) => s.gestures);
+  const flying = useFlight(s => s.active);
+  const preview = useFlight(s => s.preview);
+  const exploring = !journey && !panel && !preview && !flying;
 
   const current = getWorld(world);
   const zoneName =
@@ -37,6 +42,11 @@ export function HUD() {
             ? "Choose Visit a Garden place to go straight to a discovery."
             : "Choose Meet Shruti to start, or open the World Atlas to travel.";
 
+  const generalActions = <>
+    <button data-testid="quick-meet" onClick={() => useStore.getState().openPanel('story')}>Meet Shruti</button>
+    <button data-testid="quick-atlas" onClick={() => useStore.getState().openPanel('atlas')}>World Atlas</button>
+    {!gestures && <button data-testid="quick-gestures" onClick={() => useStore.setState({gestures:true})}>Use hand gestures</button>}
+  </>;
   return (
     <>
       <header className="topbar">
@@ -56,7 +66,7 @@ export function HUD() {
             !panel && (
               <span className="controls-hint" data-testid="controls-hint">
                 {isTouch ? "Drag to look · joystick to walk" : (
-                  <>Click the world to look · <kbd>W A S D</kbd> wander · <kbd>E</kbd> interact</>
+                  <>Drag to look around · <kbd>W A S D</kbd> wander · <kbd>E</kbd> interact</>
                 )}
               </span>
             )
@@ -71,21 +81,21 @@ export function HUD() {
         </div>
       </header>
 
-      <section className="location" aria-live="polite" data-testid="location-label">
+      <section className="location" hidden={!!preview} aria-live="polite" data-testid="location-label">
         <span className="eyebrow">
           {journey
             ? "BETWEEN WORLDS"
             : `CHAPTER ${current.number}${zoneName ? " · " + zoneName.toUpperCase() : ""}`}
         </span>
         <h1>{journey ? `Towards ${getWorld(journey.to).name}` : zoneName || current.name}</h1>
-        <p className="world-next-step">{journey ? "You’ll arrive in a moment." : directions}</p>
+        {!flying && <p className="world-next-step">{journey ? "You’ll arrive in a moment." : directions}</p>}
       </section>
 
       {!journey && !panel && (
         <div className="crosshair" aria-hidden />
       )}
 
-      {!journey && !panel && nearby && (
+      {exploring && nearby && (
         <div className="interact-prompt">
           <button data-testid="interact-button" onClick={() => interact(nearby.id)}>
             {isTouch ? (
@@ -101,27 +111,21 @@ export function HUD() {
         </div>
       )}
 
-      {!journey && !panel && (
+      {exploring && (
         <nav className="quick-actions" aria-label="Explore this world">
           {world === 'castle' && <CastleWalkStatus />}
-          {world==='castle'&&<button data-testid="castle-guide-button" onClick={()=>useStore.getState().openPanel('castle-guide')}>Explore the Castle</button>}
-          {(zone==='gallery'||zone==='library')&&<button onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
-          <button data-testid="quick-meet" onClick={() => useStore.getState().openPanel("story")}>
-            Meet Shruti
-          </button>
-          <button data-testid="quick-atlas" onClick={() => useStore.getState().openPanel("atlas")}>
-            World atlas <kbd>M</kbd>
-          </button>
-          {!gestures && (
-            <button data-testid="quick-gestures" onClick={() => useStore.setState({ gestures: true })}>
-              Use hand gestures
-            </button>
-          )}
+          {(zone==='gallery'||zone==='library')&&<button data-guide="catalogue" onClick={()=>useStore.getState().openPanel('catalogue')}>{zone==='gallery'?'Exhibition catalogue':'Browse the shelves'}</button>}
+          {world === 'hello' ? generalActions : <details className="more-routes"><summary>More options</summary><div>
+            {world==='castle' && <button data-testid="castle-guide-button" onClick={()=>useStore.getState().openPanel('castle-guide')}>Explore the Castle</button>}
+            {generalActions}
+          </div></details>}
         </nav>
       )}
 
       {isTouch && !panel && !journey && <TouchControls />}
-      {world==='garden'&&!panel&&!journey&&<GardenGuide/>}
+      {world==='garden' && exploring && <GardenGuide/>}
+      {!!preview && !panel && <LoadingStatus/>}
+      {flying && !journey && !panel && <FlightDeck/>}
     </>
   );
 }
@@ -129,8 +133,6 @@ export function HUD() {
 function TouchControls() {
   const stick = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLDivElement>(null);
-  const lookId = useRef<number | null>(null);
-  const lastLook = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const el = stick.current!;
@@ -170,37 +172,6 @@ function TouchControls() {
     };
   }, []);
 
-  useEffect(() => {
-    const down = (e: PointerEvent) => {
-      if (!(e.target instanceof HTMLCanvasElement)) return;
-      if (e.clientX < window.innerWidth * 0.35) return; // joystick zone
-      if (lookId.current !== null) return;
-      lookId.current = e.pointerId;
-      lastLook.current = { x: e.clientX, y: e.clientY };
-    };
-    const move = (e: PointerEvent) => {
-      if (e.pointerId !== lookId.current) return;
-      input.look.dx += (e.clientX - lastLook.current.x) * -0.0042;
-      input.look.dy += (e.clientY - lastLook.current.y) * -0.0042;
-      lastLook.current = { x: e.clientX, y: e.clientY };
-    };
-    const up = (e: PointerEvent) => {
-      if (e.pointerId === lookId.current) lookId.current = null;
-    };
-    window.addEventListener("pointerdown", down);
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
-    const blur = () => { lookId.current = null; input.joy.active = false; input.joy.x = input.joy.y = 0; };
-    window.addEventListener("blur", blur);
-    return () => {
-      window.removeEventListener("pointerdown", down);
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-      window.removeEventListener("blur", blur);
-    };
-  }, []);
 
   return (
     <>

@@ -5,10 +5,11 @@ import { useStore } from '../state/store';
 
 const places = interactions.filter(place => place.world === 'garden');
 export default function GardenGuide() {
-  const [selection, select] = useState('garden-reading');
   const [visited, setVisited] = useState('');
-  const place = places.find(item => item.id === selection)!;
-  const visit = () => {
+  const place = places.find(item => item.id === visited);
+  const visit = (id: string) => {
+    const place = places.find(item => item.id === id);
+    if (!place) return;
     const [x,z] = place.pos;
     // Stand in front of the selected marker. Check the pond, buildings and tree
     // before choosing a camera position inside the interaction radius.
@@ -26,13 +27,12 @@ export default function GardenGuide() {
       }
     }
   };
-  return <details className="garden-guide">
-    <summary>Visit a Garden place</summary>
-    <label htmlFor="garden-discovery">Choose a destination</label>
-    <select id="garden-discovery" value={selection} onChange={event => { select(event.target.value); setVisited(''); }}>
+  return <div className="garden-guide">
+    <label htmlFor="garden-discovery">Visit a Garden place</label>
+    <select id="garden-discovery" value="" onChange={event => visit(event.target.value)}>
+      <option value="" disabled>{place ? 'Choose another place…' : 'Choose a place…'}</option>
       {places.map(item => <option key={item.id} value={item.id}>{item.label === 'The Gramophone' ? 'Personal Soundtrack' : item.label}</option>)}
     </select>
-    <button className="btn-secondary" onClick={visit}>Go there →</button>
-    {visited === selection && <button className="btn-primary" onClick={() => useStore.getState().interactNow(place.id)}>{place.hint} →</button>}
-  </details>;
+    {place && <button className="btn-primary" onClick={() => useStore.getState().interactNow(place.id)}>{place.hint} →</button>}
+  </div>;
 }
