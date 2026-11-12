@@ -1,4 +1,5 @@
 import { memo, useMemo, useRef, useEffect, useLayoutEffect, Suspense } from "react";
+import LoadingCourt from './LoadingCourt';
 import { useFrame } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as T from "three";
@@ -521,7 +522,7 @@ export default memo(function FirstHello() {
       />
       <Mountains />
       <River />
-      <Suspense fallback={null}>
+      <Suspense fallback={<LoadingCourt/>}>
       <HeroTree />
       <Terrain />
       <Path />

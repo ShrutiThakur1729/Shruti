@@ -140,6 +140,7 @@ function Hall() {
           <planeGeometry args={[3, 5]} />
           <meshStandardMaterial
             map={glass}
+            alphaTest={.05}
             emissiveMap={glass}
             emissive="#ffffff"
             emissiveIntensity={0.85}

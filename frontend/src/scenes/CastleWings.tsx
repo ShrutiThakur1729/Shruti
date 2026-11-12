@@ -13,9 +13,8 @@ export const bookBus: { next: () => void; prev: () => void } = { next: () => {},
 
 function WingWindows() {
   const glass=useMemo(()=>stainedGlassTexture(),[]);
-  useEffect(()=>()=>glass.dispose(),[glass]);
   return <group>{[-7,0,7].map(x=><group key={x} position={[x,0,-21.4]}>
-    <mesh position={[0,8.5,0]}><planeGeometry args={[3.2,6.5]}/><meshStandardMaterial map={glass} emissiveMap={glass} emissive="#fff1d6" emissiveIntensity={.8}/></mesh>
+    <mesh position={[0,8.5,0]}><planeGeometry args={[3.2,6.5]}/><meshStandardMaterial map={glass} alphaTest={.05} emissiveMap={glass} emissive="#fff1d6" emissiveIntensity={.65}/></mesh>
     {[-1.7,1.7].map(side=><mesh key={side} position={[side,8.3,.08]}><boxGeometry args={[.22,6.7,.2]}/><meshStandardMaterial color="#a08859" roughness={.7}/></mesh>)}
     <mesh position={[0,11.5,.08]} scale={[1,1.2,1]}><torusGeometry args={[1.7,.13,6,24,Math.PI]}/><meshStandardMaterial color="#b89c65" roughness={.6}/></mesh>
   </group>)}</group>;
@@ -66,11 +65,11 @@ function Exhibit({
     }
   });
   const plaque = useMemo(
-    () => plaqueTexture(project.name, project.subtitle, "Approach to explore · tap or press E"),
+    () => plaqueTexture(project.name, project.subtitle, "Select to explore"),
     [project.name, project.subtitle]
   );
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} onClick={e => { e.stopPropagation(); open('exhibit', project.id); }}>
       <group position={[0,2.4,-1.2]}>
         <mesh><boxGeometry args={[3.4,4.5,.16]}/><meshStandardMaterial color={['#245055','#49415b','#594534','#374d39','#303e60'][index]} roughness={.78}/></mesh>
         {[-1.72,1.72].map(edge=><mesh key={edge} position={[edge,0,.08]}><boxGeometry args={[.10,4.65,.12]}/><meshStandardMaterial color="#c4a56a" roughness={.55}/></mesh>)}
@@ -84,20 +83,13 @@ function Exhibit({
         <cylinderGeometry args={[0.88, 0.78, 0.1, 14]} />
         <meshStandardMaterial color="#6b5335" metalness={0.5} roughness={0.5} />
       </mesh>
-      <group ref={spin} position={[0, 2.05, 0]} onClick={(e) => {
-        e.stopPropagation();
-        open("exhibit", project.id);
-      }}>
+      <group ref={spin} position={[0, 2.05, 0]}>
         <Artefact kind={project.art} />
       </group>
       <mesh position={[0,3.3,-.8]}><planeGeometry args={[3.1,1.3]}/><meshBasicMaterial map={plaque} toneMapped={false}/></mesh>
       <mesh position={[0, 0.02, 1.35]} rotation={[-Math.PI / 2, 0, 0]}>
         <circleGeometry args={[0.95, 24]} />
         <meshStandardMaterial color="#e8c88a" emissive="#c9954a" emissiveIntensity={0.35} transparent opacity={0.5} />
-      </mesh>
-      <mesh position={[0, 1.6, 1.1]} rotation={[-0.35, 0, 0]}>
-        <planeGeometry args={[1.7, 0.85]} />
-        <meshStandardMaterial map={plaque} roughness={0.8} />
       </mesh>
       {nearby?.id === `exhibit-${project.id}` && (
         <pointLight position={[0, 3.2, 0.6]} intensity={7} distance={5} decay={2} color="#ffd98a" />
