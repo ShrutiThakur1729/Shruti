@@ -9,9 +9,28 @@ import { dispatchGesture } from '../src/systems/gestureDispatch';
 function Replay() {
   const world=useStore(s=>s.world), journey=useStore(s=>s.journey);
   const [result,setResult]=useState('No trace replayed');
+  const [aim,setAim]=useState(false);
+  const [collapsed,collapse]=useState(false);
+  const altitude=useRef<HTMLOutputElement>(null);
+  useEffect(()=>{
+    if(!aim)return;
+    const pick=(e:MouseEvent)=>{
+      window.removeEventListener('click',pick,true);
+      e.preventDefault();e.stopImmediatePropagation();
+      const sample={x:e.clientX/innerWidth,y:e.clientY/innerHeight,confidence:.99};
+      const recognizer=new GestureRecognizer();
+      for(const [time,pinch] of [[0,1],[40,.18],[140,.18],[200,1]]){
+        recognizer.update({...sample,pinch},time).forEach(dispatchGesture);
+      }
+      setAim(false);
+    };
+    window.addEventListener('click',pick,true);
+    return ()=>window.removeEventListener('click',pick,true);
+  },[aim]);
   const route=useRef<[number,number][]>([]), deadline=useRef(0);
   useEffect(()=>{
     const track=(e:Event)=>{
+      if(altitude.current)altitude.current.textContent=(e as CustomEvent).detail.y.toFixed(2);
       if(!route.current.length)return;
       const p=(e as CustomEvent).detail,target=route.current[0];
       const dx=target[0]-p.x,dz=target[1]-p.z,d=Math.hypot(dx,dz);
@@ -32,7 +51,10 @@ function Replay() {
     }
     setResult(labels.join(', ')||'No gesture recognised');
   };
-  return <><App/><aside style={{position:'fixed',top:0,left:'35%',zIndex:10000,background:'#11291f',color:'#fff',padding:8,border:'1px solid gold'}} aria-label="Browser replay fixture">
+  return <><App/><aside style={{position:'fixed',top:0,left:0,zIndex:10000,background:'#11291f',color:'#fff',padding:4,border:'1px solid gold',maxWidth:'80vw'}} aria-label="Browser replay fixture">
+    <button onClick={()=>collapse(!collapsed)}>{collapsed?'Show test controls':'Hide test controls'}</button>
+    <button onClick={()=>setAim(true)}>{aim?'Aim at a target':'Replay a pinch'}</button>
+    <output ref={altitude} aria-label="Camera height" />{!collapsed && <>
     <button onClick={()=>replay(-.4)}>Replay next-world swipe</button>
     <button onClick={()=>replay(.4)}>Replay previous-world swipe</button>
     <button onClick={()=>replay(.15,true)}>Replay gentle look trace</button>
@@ -40,6 +62,6 @@ function Replay() {
     <button onClick={()=>walk(1)}>Walk staircase to library</button>
     <button onClick={()=>{route.current=[];input.joy.active=false;useStore.getState().set({world:'castle',phase:'world',panel:null});useStore.getState().setZone('hall',{position:[0,2.3,24],lookAt:[0,6,-24]});}}>Open Castle test scene</button>
     <output data-testid="replay-result">{world} · {journey?`travelling to ${journey.to}`:'arrived'} · {result}</output>
-  </aside></>;
+    </>}</aside></>;
 }
 createRoot(document.getElementById('root')!).render(<Replay/>);
