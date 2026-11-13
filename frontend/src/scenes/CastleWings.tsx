@@ -1,16 +1,11 @@
-import { GALLERY_EXHIBITS } from '../systems/castleLayout';
-import { useMemo, useRef, useState, useEffect } from "react";
-import { useFrame, useThree } from "@react-three/fiber";
+import { GALLERY_EXHIBITS, LIBRARY_BOOKS } from '../systems/castleLayout';
+import { useMemo, useRef } from "react";
+import { useFrame } from "@react-three/fiber";
 import * as T from "three";
-import { blockGeometry, useSurface, Stones, Banner, DustMotes } from "./shared/Props";
-import { plaqueTexture, bookSpreads, bannerTexture, stainedGlassTexture } from "./shared/textures";
+import { useSurface, Stones, Banner, DustMotes } from "./shared/Props";
+import { plaqueTexture, stainedGlassTexture, libraryCover } from "./shared/textures";
 import { projects, books } from "../data/content";
 import { useStore } from "../state/store";
-import { interactionPoint } from "../data/interactions";
-import { audio } from "../audio/AudioEngine";
-
-export const bookBus: { next: () => void; prev: () => void } = { next: () => {}, prev: () => {} };
-
 function WingWindows() {
   const glass=useMemo(()=>stainedGlassTexture(),[]);
   return <group>{[-7,0,7].map(x=><group key={x} position={[x,0,-21.4]}>
@@ -69,7 +64,7 @@ function Exhibit({
     [project.name, project.subtitle]
   );
   return (
-    <group position={[x, 0, z]} onClick={e => { e.stopPropagation(); open('exhibit', project.id); }}>
+    <group position={[x, 0, z]} userData={{discovery:`exhibit-${project.id}`}} onClick={e => { e.stopPropagation(); open('exhibit', project.id); }}>
       <group position={[0,2.4,-1.2]}>
         <mesh><boxGeometry args={[3.4,4.5,.16]}/><meshStandardMaterial color={['#245055','#49415b','#594534','#374d39','#303e60'][index]} roughness={.78}/></mesh>
         {[-1.72,1.72].map(edge=><mesh key={edge} position={[edge,0,.08]}><boxGeometry args={[.10,4.65,.12]}/><meshStandardMaterial color="#c4a56a" roughness={.55}/></mesh>)}
@@ -330,11 +325,9 @@ export function Library() {
         for (const y of [0.9, 1.85, 2.8, 3.75, 4.7]) addRow(seg, seg + 6.2, z, y);
       }
     }
-    // side shelves
-    for (const x of [-13.4, 13.05]) {
-      for (const z of [-18, -12, -6, 0, 6]) {
-        for (const y of [0.9, 1.85, 2.8, 3.75]) addRowZ(list, x, z, z + 5.4, y);
-      }
+    // Keep the entire west wall clear where the staircase passage enters.
+    for (const z of [-18, -12, -6, 0, 6]) {
+      for (const y of [0.9, 1.85, 2.8, 3.75]) addRowZ(list, 13.05, z, z + 5.4, y);
     }
     return list;
   }, []);
@@ -344,10 +337,9 @@ export function Library() {
       for (let seg = -13.6; seg < 13.6; seg += 6.8)
         for (const y of [0.62, 1.57, 2.52, 3.47, 4.42, 5.3])
           list.push({ p: new T.Vector3(seg + 3.2, y, z), s: new T.Vector3(6.6, 0.1, 0.85), r: 0 });
-    for (const x of [-13.4, 13.05])
-      for (const z of [-18.2, -6.2, 5.8])
-        for (const y of [0.62, 1.57, 2.52, 3.47, 4.42])
-          list.push({ p: new T.Vector3(x, y, z + 2.7), s: new T.Vector3(0.85, 0.1, 6.6), r: 0 });
+    for (const z of [-18.2, -6.2, 5.8])
+      for (const y of [0.62, 1.57, 2.52, 3.47, 4.42])
+        list.push({ p: new T.Vector3(13.05, y, z + 2.7), s: new T.Vector3(0.85, 0.1, 6.6), r: 0 });
     return list;
   }, []);
   return (
@@ -412,55 +404,18 @@ function shelfBooksMaterial() {
 }
 
 function FeaturedBook({ book, index }: { book: (typeof books)[number]; index: number }) {
-  const title=useMemo(()=>plaqueTexture(book.title,'The Living Archives','Approach to read'),[book.title]);
-  const pos = [
-    [-8.2, -14],
-    [-3.4, -14],
-    [3.4, -14],
-    [8.2, -14],
-    [-5.8, 2],
-    [5.8, 2],
-  ][index];
-  const open = useStore((s) => s.openPanel);
-  const nearby = useStore((s) => s.nearby);
-  const ref = useRef<T.Group>(null);
-  const selected=useStore(s=>s.panel==='book'&&s.refId===book.id&&!s.bookReader);
-  useFrame(({ clock }) => {
-    if (ref.current)
-      ref.current.position.z =
-        pos[1] + (nearby?.id === `book-${book.id}` ? 0.42 : 0.18) + Math.sin(clock.elapsedTime + index) * 0.015;
-  });
-  return (
-    <group
-      ref={ref}
-      visible={!selected}
-      position={[pos[0], 1.5, pos[1]]}
-      onClick={(e) => {
-        e.stopPropagation();
-        open("book", book.id);
-      }}
-      data-testid={`scene-book-${book.id}`}
-    >
-      <mesh castShadow>
-        <boxGeometry args={[0.34, 0.62, 0.16]} />
-        <meshStandardMaterial
-          color={LEATHER[index % LEATHER.length]}
-          roughness={0.6}
-          emissive="#8a6d33"
-          emissiveIntensity={nearby?.id === `book-${book.id}` ? 0.5 : 0.18}
-        />
-      </mesh>
-      <mesh position={[0, 0, 0.085]}>
-        <planeGeometry args={[0.24, 0.5]} />
-        <meshStandardMaterial color="#e8d9a3" emissive="#c9a75c" emissiveIntensity={0.4} />
-      </mesh>
-      <mesh position={[0, 0.4, 0]}>
-        <sphereGeometry args={[0.045, 8, 8]} />
-        <meshStandardMaterial color="#ffe9b0" emissive="#ffca6e" emissiveIntensity={2.6} />
-      </mesh>
-      <mesh position={[0,-.75,.1]} rotation={[-.3,0,0]}><planeGeometry args={[1.8,.7]}/><meshStandardMaterial map={title} emissive="#c9a75c" emissiveIntensity={.2}/></mesh>
+  const [x,z] = LIBRARY_BOOKS[index];
+  const cover = useMemo(() => libraryCover(book.title, book.author, LEATHER[index]), [book,index]);
+  return <group position={[x,0,z]} userData={{discovery:`book-${book.id}`}}
+    onClick={e=>{e.stopPropagation();useStore.getState().openPanel('book',book.id);}}>
+    <mesh position={[0,.67,0]}><boxGeometry args={[2.36,1.34,1.02]}/><meshStandardMaterial color="#443026"/></mesh>
+    <mesh position={[0,1.34,0]}><boxGeometry args={[2.55,.10,1.16]}/><meshStandardMaterial color="#af8b58"/></mesh>
+    <group position={[0,2.43,0]} rotation={[-.13,0,0]}>
+      <mesh><boxGeometry args={[1.65,2.1,.27]}/><meshStandardMaterial color={LEATHER[index]}/></mesh>
+      <mesh position={[0,0,.15]}><planeGeometry args={[1.50,1.89]}/><meshBasicMaterial map={cover} toneMapped={false}/></mesh>
+      <mesh position={[-.75,0,.15]}><boxGeometry args={[.12,2.12,.08]}/><meshStandardMaterial color="#a78853"/></mesh>
     </group>
-  );
+  </group>;
 }
 
 function Globe({ position }: { position: [number, number, number] }) {
@@ -497,153 +452,6 @@ function Ladder({ position }: { position: [number, number, number] }) {
           <meshStandardMaterial color="#6b5335" roughness={0.8} />
         </mesh>
       ))}
-    </group>
-  );
-}
-
-/* ————————————————————— 3D BOOK EXPERIENCE ————————————————————— */
-type Turn = { dir: 1 | -1; t: number } | null;
-
-export function BookExperience({ bookId }: { bookId: string }) {
-  const { camera } = useThree();
-  const book = books.find((b) => b.id === bookId)!;
-  const spreads = useMemo(() => bookSpreads(book), [book]);
-  const [spreadIdx, setSpreadIdx] = useState(0);
-  const [, force] = useState(0);
-  const turn = useRef<Turn>(null);
-  const pivot = useRef<T.Group>(null);
-  const group = useRef<T.Group>(null);
-  const coverL = useRef<T.Group>(null);
-  const coverR = useRef<T.Group>(null);
-  const intro = useRef(0);
-  const shelfPos = useMemo(() => interactionPoint(`book-${bookId}`), [bookId]);
-  const closePanel = useStore((s) => s.closePanel);
-  const closing=useStore(s=>s.bookClosing);
-
-  useEffect(() => {
-    audio.playSfx("bookOpen");
-    bookBus.next = () => {
-      if (turn.current || spreadIdx >= spreads.length - 1) return;
-      audio.playSfx("page");
-      turn.current = { dir: 1, t: 0 };
-    };
-    bookBus.prev = () => {
-      if (turn.current || spreadIdx <= 0) return;
-      audio.playSfx("page");
-      turn.current = { dir: -1, t: 0 };
-    };
-    return () => {
-      bookBus.next = () => {};
-      bookBus.prev = () => {};
-    };
-  }, [spreadIdx, spreads.length]);
-
-  useFrame((_, dt) => {
-    // intro: fly from the shelf into reading position
-    if (closing) {
-      intro.current=Math.max(0,intro.current-dt/0.8);
-      if(intro.current===0){useStore.setState({panel:null,refId:null,bookClosing:false});return;}
-    } else if (intro.current < 1) intro.current = Math.min(1, intro.current + dt / 1.2);
-    const e = intro.current * intro.current * (3 - 2 * intro.current);
-    const view = camera as T.PerspectiveCamera;
-    const depth = 1.85;
-    const halfHeight = Math.tan(T.MathUtils.degToRad(view.fov / 2)) * depth;
-    const fit = Math.min(1, halfHeight * view.aspect * .8 / 1.2, halfHeight * .82);
-    const anchor = new T.Vector3(0, .55 * fit + halfHeight * .13, -depth)
-      .applyQuaternion(camera.quaternion).add(camera.position);
-    if (group.current) {
-      const from = shelfPos
-        ? new T.Vector3(shelfPos[0], shelfPos[1] + 1.5, shelfPos[2])
-        : anchor.clone().add(new T.Vector3(0, -1.2, -0.6));
-      group.current.position.lerpVectors(from, anchor, e);
-      group.current.quaternion.copy(camera.quaternion);
-      group.current.rotateX(-0.22);
-      const s = fit * (0.55 + 0.45 * e);
-      group.current.scale.setScalar(s);
-    }
-    if (coverL.current)
-      coverL.current.rotation.y = T.MathUtils.lerp(Math.PI * 0.96, 0.045, Math.max(0, (e - 0.35) / 0.65));
-    if (coverR.current)
-      coverR.current.rotation.y = T.MathUtils.lerp(-Math.PI * 0.96, -0.045, Math.max(0, (e - 0.35) / 0.65));
-    // page turn
-    const t = turn.current;
-    if (t && pivot.current) {
-      t.t = Math.min(1, t.t + dt / 0.65);
-      const p = t.t * t.t * (3 - 2 * t.t);
-      pivot.current.rotation.y = t.dir === 1 ? -Math.PI * p : -Math.PI * (1 - p);
-      pivot.current.visible = true;
-      if (t.t >= 1) {
-        const next = spreadIdx + t.dir;
-        turn.current = null;
-        setSpreadIdx(next);
-        force((v) => v + 1);
-      }
-    } else if (pivot.current) {
-      pivot.current.visible = false;
-    }
-  });
-
-  const spread = spreads[spreadIdx];
-  const moving = turn.current;
-  const rightUnder = moving?.dir === 1 && spreads[spreadIdx + 1] ? spreads[spreadIdx + 1].right : spread.right;
-  const leftUnder = moving?.dir === -1 && spreads[spreadIdx - 1] ? spreads[spreadIdx - 1].left : spread.left;
-
-  return (
-    <group ref={group} data-testid="book3d">
-      <mesh position={[0, -0.56, -0.03]}>
-        <boxGeometry args={[1.58, 1.12, 0.06]} />
-        <meshStandardMaterial color="#3a2418" roughness={0.6} />
-      </mesh>
-      <group ref={coverL}>
-        <mesh position={[-0.755, -0.56, -0.045]} castShadow>
-          <boxGeometry args={[0.78, 1.06, 0.035]} />
-          <meshStandardMaterial color="#5a2e28" roughness={0.55} />
-        </mesh>
-        <mesh position={[-0.755, -0.56, -0.026]}>
-          <boxGeometry args={[0.62, 0.8, 0.005]} />
-          <meshStandardMaterial color="#c9a75c" metalness={0.6} roughness={0.4} />
-        </mesh>
-      </group>
-      <group ref={coverR}>
-        <mesh position={[0.755, -0.56, -0.045]} castShadow>
-          <boxGeometry args={[0.78, 1.06, 0.035]} />
-          <meshStandardMaterial color="#5a2e28" roughness={0.55} />
-        </mesh>
-        <mesh position={[0.755, -0.56, -0.026]}>
-          <boxGeometry args={[0.62, 0.8, 0.005]} />
-          <meshStandardMaterial color="#c9a75c" metalness={0.6} roughness={0.4} />
-        </mesh>
-      </group>
-      {/* static pages */}
-      <mesh position={[-0.375, -0.555, 0.01]}>
-        <planeGeometry args={[0.72, 0.98]} />
-        <meshStandardMaterial map={leftUnder} roughness={0.9} />
-      </mesh>
-      <mesh position={[0.375, -0.555, 0.01]}>
-        <planeGeometry args={[0.72, 0.98]} />
-        <meshStandardMaterial map={rightUnder} roughness={0.9} />
-      </mesh>
-      {/* turning page */}
-      <group ref={pivot} position={[0, -0.555, 0.015]} visible={false}>
-        <mesh position={[0.375, 0, 0]}>
-          <planeGeometry args={[0.72, 0.98]} />
-          <meshStandardMaterial
-            map={moving?.dir === 1 ? spread.right : spread.left}
-            roughness={0.9}
-            side={T.DoubleSide}
-          />
-        </mesh>
-      </group>
-      <mesh
-        onClick={(e) => {
-          e.stopPropagation();
-          closePanel();
-        }}
-        position={[0, -0.56, -0.01]}
-        visible={false}
-      >
-        <boxGeometry args={[1.6, 1.2, 0.1]} />
-      </mesh>
     </group>
   );
 }

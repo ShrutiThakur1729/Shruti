@@ -510,8 +510,8 @@ export default function CastleWorld() {
   const quality = useStore((s) => s.quality);
   return (
     <>
-      <color attach="background" args={["#d3c2a4"]} />
-      <fog attach="fog" args={["#d3c2a4", 80, 420]} />
+
+
       <Sky sunPosition={[-60, 16, -85]} turbidity={5} rayleigh={2.4} mieCoefficient={0.008} mieDirectionalG={0.85} />
       <hemisphereLight args={["#eadbbf", "#38402c", 1.25]} />
       <directionalLight

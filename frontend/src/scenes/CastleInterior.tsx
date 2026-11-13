@@ -11,8 +11,8 @@ export default function CastleInterior({ zone }: { zone: Zone }) {
   const quality = useStore((s) => s.quality);
   return (
     <>
-      <color attach="background" args={["#100d0a"]} />
-      <fog attach="fog" args={["#100d0a", 40, 120]} />
+
+
       <ambientLight intensity={1.1} color="#d8c5a4" />
       <hemisphereLight args={['#ffe4ba','#584331',1.6]} />
       {[-39,39].map(x=><pointLight key={x} position={[x,12.5,-30]} intensity={90} distance={34} decay={2} color="#ffd49a" />)}

@@ -10,6 +10,14 @@ const discoveries = {
   garden: ['The Poetry Nook holds Shruti’s poems.', 'Choose a garden place to visit it immediately.'],
 };
 
+export function LoadingSignal(){
+  useLayoutEffect(()=>{
+    useFlight.setState(s=>({pending:s.pending+1}));
+    return ()=>{useFlight.setState(s=>({pending:Math.max(0,s.pending-1)}));};
+  },[]);
+  return null;
+}
+
 export default function LoadingCourt() {
   const camera = useThree(s => s.camera);
   const world = useStore(s => s.world);
@@ -18,7 +26,7 @@ export default function LoadingCourt() {
   const floor = origin.y - 2.1;
   useLayoutEffect(() => {
     const initialZone = useStore.getState().zone;
-    useFlight.setState({preview:{x:origin.x, floor, z:origin.z, paused:false}});
+    useFlight.setState({preview:{x:origin.x, floor, z:origin.z}});
     return () => {
       useFlight.setState({preview:null,active:false,lift:0});
       const state = useStore.getState();
@@ -38,7 +46,7 @@ export default function LoadingCourt() {
         return <group key={i} position={[8*Math.sin(angle),0,-8*Math.cos(angle)]} rotation={[0,-angle,0]}>
           {[-1.25,1.25].map(x=><mesh key={x} position={[x,1.5,0]}><cylinderGeometry args={[.2,.32,3,8]}/><meshStandardMaterial color="#d6bc91"/></mesh>)}
           <mesh position={[0,3,0]}><torusGeometry args={[1.25,.2,8,18,Math.PI]}/><meshStandardMaterial color="#e1c69a"/></mesh>
-          <mesh position={[0,2,0]} onClick={e=>{
+          <mesh position={[0,2,0]} userData={{previewNote:discoveries[world][i%2]}} onClick={e=>{
             e.stopPropagation();
             useFlight.setState(s=>({preview:s.preview && {...s.preview,note:discoveries[world][i%2]}}));
           }}><octahedronGeometry args={[.55]}/><meshBasicMaterial color="#ffd579"/></mesh>

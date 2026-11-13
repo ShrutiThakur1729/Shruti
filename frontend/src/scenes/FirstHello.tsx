@@ -1,5 +1,5 @@
 import { memo, useMemo, useRef, useEffect, useLayoutEffect, Suspense } from "react";
-import LoadingCourt from './LoadingCourt';
+import { LoadingSignal } from './LoadingCourt';
 import { useFrame } from "@react-three/fiber";
 import { Sky } from "@react-three/drei";
 import * as T from "three";
@@ -404,7 +404,7 @@ function Discoveries() {
         { pos: [-5, 4] as const, id: "hello-story" as const, book: true },
         { pos: [4, -6] as const, id: "hello-atlas" as const, book: false },
       ].map(({ pos: [x, z], id, book }) => (
-        <group key={id} position={[x, groundHeight(x, z), z]} data-testid={`scene-${id}`}>
+        <group key={id} userData={{discovery:id}} onClick={e=>{e.stopPropagation();useStore.getState().interactNow(id);}} position={[x, groundHeight(x, z), z]} data-testid={`scene-${id}`}>
           <mesh geometry={blockGeometry} scale={[1.2, 1.5, 1]} position={[0, 0.75, 0]} material={stone} castShadow />
           {book ? (
             <mesh position={[0, 1.6, 0]} rotation={[-0.25, 0, 0]} castShadow>
@@ -502,8 +502,8 @@ export default memo(function FirstHello() {
   const quality = useStore((s) => s.quality);
   return (
     <>
-      <color attach="background" args={["#b9c7c4"]} />
-      <fog attach="fog" args={["#b9c7c4", 100, 450]} />
+
+
       <Sky sunPosition={[-80, 32, -90]} turbidity={3.4} rayleigh={1.8} />
       <hemisphereLight args={["#d1e1eb", "#45412b", 1.6]} />
       <directionalLight
@@ -522,7 +522,7 @@ export default memo(function FirstHello() {
       />
       <Mountains />
       <River />
-      <Suspense fallback={<LoadingCourt/>}>
+      <Suspense fallback={<LoadingSignal/>}>
       <HeroTree />
       <Terrain />
       <Path />
