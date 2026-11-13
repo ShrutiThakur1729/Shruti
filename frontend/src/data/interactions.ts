@@ -1,6 +1,6 @@
 import type { Point, WorldId } from "./worlds";
 import type { Zone } from "../state/store";
-import { WING_ORIGIN, GALLERY_EXHIBITS } from '../systems/castleLayout';
+import { WING_ORIGIN, GALLERY_EXHIBITS, LIBRARY_BOOKS } from '../systems/castleLayout';
 
 export type InteractKind =
   | "story"
@@ -130,22 +130,15 @@ const localInteractions: Interaction[] = [
     radius: 4,
   },
   // — Library —
-  ...[
-    { refId: "story", pos: [-8.2, -14] },
-    { refId: "academic", pos: [-3.4, -14] },
-    { refId: "workshop", pos: [3.4, -14] },
-    { refId: "experience", pos: [8.2, -14] },
-    { refId: "achievements", pos: [-5.8, 2] },
-    { refId: "people", pos: [5.8, 2] },
-  ].map((b) => ({
-    id: `book-${b.refId}`,
+  ...["story","academic","workshop","experience","achievements","people"].map((refId, i) => ({
+    id: `book-${refId}`,
     world: "castle" as WorldId,
     zone: "library" as Zone | null,
     kind: "book" as InteractKind,
-    label: b.refId,
+    label: refId,
     hint: "Take this book from the shelf",
-    pos: b.pos as [number, number],
-    refId: b.refId,
+    pos: LIBRARY_BOOKS[i],
+    refId,
     radius: 3.2,
   })),
   {
