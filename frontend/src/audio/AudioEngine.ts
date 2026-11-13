@@ -513,20 +513,23 @@ export class AudioEngine {
       vol: number,
       type: BiquadFilterType,
       from: number,
-      to?: number
+      to?: number,
+      delay = 0
     ) => {
       const src = ctx.createBufferSource();
       src.buffer = this.noiseBuffer!;
+      const start = t + delay;
       const filter = ctx.createBiquadFilter();
       filter.type = type;
-      filter.frequency.setValueAtTime(from, t);
-      if (to) filter.frequency.exponentialRampToValueAtTime(to, t + dur);
+      filter.frequency.setValueAtTime(from, start);
+      if (to) filter.frequency.exponentialRampToValueAtTime(to, start + dur);
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      gain.gain.setValueAtTime(.0001, start);
+      gain.gain.exponentialRampToValueAtTime(vol, start + .015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
       src.connect(filter).connect(gain).connect(this.sfxBus!);
-      src.start(t);
-      src.stop(t + dur + 0.05);
+      src.start(start);
+      src.stop(start + dur + 0.05);
     };
     switch (name) {
       case "chime":
@@ -542,7 +545,9 @@ export class AudioEngine {
         tone(1900, 0.04, 0.015);
         break;
       case "page":
-        noiseBurst(0.22, 0.05, "bandpass", 1200, 3200);
+        noiseBurst(.16, .14, "bandpass", 1600, 4700);
+        noiseBurst(.27, .12, "highpass", 3200, 1200, .10);
+        noiseBurst(.09, .08, "lowpass", 1800, 600, .38);
         break;
       case "bookOpen":
         tone(96, 0.16, 0.1, "sine", 70);
