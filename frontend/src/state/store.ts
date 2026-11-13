@@ -93,8 +93,6 @@ interface WorldState {
   fading: boolean;
   themeReady: boolean;
   gestures: boolean;
-  bookReader: boolean;
-  bookClosing: boolean;
 
   set: (partial: Partial<WorldState>) => void;
   openPanel: (panel: PanelId, refId?: string | null) => void;
@@ -127,8 +125,6 @@ export const useStore = create<WorldState>((set, get) => ({
   fading: false,
   themeReady: false,
   gestures: false,
-  bookReader: true,
-  bookClosing: false,
 
   set: (partial) => {
     if(partial.phase==='opendoor'){audio.init();audio.startTheme();}
@@ -138,13 +134,12 @@ export const useStore = create<WorldState>((set, get) => ({
 
   openPanel: (panel, refId = null) => {
     document.exitPointerLock?.();
-    set({ panel, refId, bookReader: true, bookClosing: false });
+    set({ panel, refId });
   },
 
   closePanel: () => {
-    const s=get();
-    if(s.panel==='book'&&!s.bookReader){set({bookClosing:true});return;}
-    set({ panel: null, refId: null, bookClosing:false });
+    if (get().panel === 'book') audio.playSfx('bookClose');
+    set({panel:null,refId:null});
   },
 
   enter: (guided) => {audio.init();audio.setWorld('hello');set({ phase: "world", entered: true, guided, panel: "welcome", caption: "Hello World. Welcome to a little universe called Shruti." });},
@@ -166,13 +161,13 @@ export const useStore = create<WorldState>((set, get) => ({
   },
 
   setZone: (zone, at) => {
-    if (zone === 'gallery') {
+    if (zone === 'gallery' || zone === 'library') {
       const aspect = window.innerWidth / Math.max(1, window.innerHeight);
       const halfFov = (aspect < 1 ? 75 : 55) * Math.PI / 360;
       const distance = Math.max(13, Math.min(25, 10.8 / (aspect * Math.tan(halfFov))));
-      at = {position: [-39,8.55,-40.7 + distance], lookAt: [-39,9,-40.7]};
+      const x = zone === 'library' ? 39 : -39;
+      at = {position: [x,8.55,-40.7 + distance], lookAt: [x,8.65,-40.7]};
     }
-    if(zone==='library')at={position:[39,8.55,-15.5],lookAt:[39,9,-39]};
     set({ zone, panel: null, refId: null, fading: true });
     window.dispatchEvent(
       new CustomEvent("twi-teleport", { detail: at })
