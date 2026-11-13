@@ -1,6 +1,6 @@
 import { FilesetResolver, HandLandmarker } from '@mediapipe/tasks-vision';
 import { GestureRecognizer } from './gestureRecognizer';
-import { dispatchGesture } from './gestureDispatch';
+import { dispatchGesture, handTarget } from './gestureDispatch';
 import { input } from './input';
 import { useStore } from '../state/store';
 const WASM='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.2/wasm';
@@ -35,17 +35,20 @@ export async function startGestures(video:HTMLVideoElement,onFrame:(f:GestureFra
   const confidence=detected.handedness[0]?.[0]?.score??0;
   // Require a short neutral open-hand interval after context changes or tracking loss.
   if(calibration<12){if(pinch>.55&&confidence>.65){center={x:(center.x*calibration+x)/(calibration+1),y:(center.y*calibration+y)/(calibration+1)};calibration++;}else calibration=0;}
+  // Map the comfortable calibrated range of the palm to the entire screen.
+  const aimX=Math.min(.995,Math.max(.005,.5+(x-center.x)*1.65));
+  const aimY=Math.min(.995,Math.max(.005,.5+(y-center.y)*1.65));
   let event='';
   if(calibration>=12){
    const other=detected.landmarks[1];
    const actions=recognizer.update({x,y,pinch,confidence,span:other?Math.hypot(lm[9].x-other[9].x,lm[9].y-other[9].y):undefined},now);
-   for(const a of actions){const label=dispatchGesture(a);if(a.type==='swipe')lookAfter=now+400;if(a.type!=='drag'&&a.type!=='zoom')event=label||a.type;}
-   if(!s.panel&&!s.journey&&s.phase==='world'&&pinch>.55&&!other&&now>lookAfter){
+   for(const a of actions){const label=dispatchGesture({...a,x:aimX,y:aimY});if(a.type==='swipe')lookAfter=now+400;if(a.type!=='drag'&&a.type!=='zoom')event=label||a.type;}
+   if(!s.panel&&!s.journey&&s.phase==='world'&&pinch>.55&&!other&&now>lookAfter && handTarget(aimX,aimY) instanceof HTMLCanvasElement){
     const dead=(v:number)=>Math.abs(v)<.07?0:Math.sign(v)*Math.min(.3,Math.abs(v)-.07);
     input.look.dx-=dead(x-center.x)*.07;input.look.dy-=dead(y-center.y)*.05;
    }
   }
-  if(now-lastUi>100||event){lastUi=now;onFrame({hand:true,pinch:pinch<.5,walking:input.gestureWalk,x,y,calibrating:calibration<12?calibration/12:null,center,event});}
+  if(now-lastUi>55||event){lastUi=now;onFrame({hand:true,pinch:pinch<.5,walking:input.gestureWalk,x:aimX,y:aimY,calibrating:calibration<12?calibration/12:null,center,event});}
  };
  loop();
  return {stop:()=>{cancelAnimationFrame(raf);reset();hands.close();stream.getTracks().forEach(t=>t.stop());video.srcObject=null;},recalibrate:()=>{reset();calibration=0;}};

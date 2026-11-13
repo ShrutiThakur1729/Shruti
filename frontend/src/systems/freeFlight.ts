@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 
-type PreviewArea = { x: number; floor: number; z: number; paused: boolean; note?:string };
+type PreviewArea = { x: number; floor: number; z: number; note?:string };
 export const useFlight = create<{
   active: boolean; speed: number; lift: number; preview: PreviewArea | null;
-}>(() => ({ active: false, speed: 10, lift: 0, preview: null }));
+  pending:number; previewChoice:'auto'|'stay'|'skip';
+}>(() => ({ active: false, speed: 10, lift: 0, preview: null, pending:0,previewChoice:'auto' }));
 
 export function toggleFlight(active: boolean) {
   useFlight.setState({ active, lift: active ? 3 : 0 });

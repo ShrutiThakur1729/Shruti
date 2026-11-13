@@ -22,8 +22,30 @@ const ZONE_ENTRY: Record<string, { position: Point; lookAt: Point }> = {
 const CASTLE_DOORSTEP: { position: Point; lookAt: Point } = { position: [150, 6, -198], lookAt: [150, 10, -214] };
 
 export default function CameraRig() {
-  const { camera, gl, size } = useThree();
-  const galleryView = useStore(s => s.zone === "gallery");
+  const { camera, gl, size, scene } = useThree();
+  useEffect(()=>{
+    const ray=new THREE.Raycaster();
+    const pick=(event:Event)=>{
+      const {x,y}=(event as CustomEvent<{x:number;y:number}>).detail;
+      const rect=gl.domElement.getBoundingClientRect();
+      ray.setFromCamera(new THREE.Vector2((x*innerWidth-rect.left)/rect.width*2-1,1-(y*innerHeight-rect.top)/rect.height*2),camera);
+      // The first opaque surface blocks picks through a wall or a bookshelf.
+      for(const hit of ray.intersectObjects(scene.children,true)){
+        if(!(hit.object instanceof THREE.Mesh))continue;
+        const material=Array.isArray(hit.object.material)?hit.object.material[0]:hit.object.material;
+        if(!material?.visible || material.transparent && material.opacity<.45)continue;
+        let node:THREE.Object3D|null=hit.object,visible=true,id:string|undefined,lantern:string|undefined;
+        while(node){visible=visible && node.visible;id??=node.userData.discovery;lantern??=node.userData.previewNote;node=node.parent;}
+        if(!visible)continue;
+        if(id){event.preventDefault();useStore.getState().interactNow(id);}
+        else if(lantern){event.preventDefault();useFlight.setState(s=>({preview:s.preview && {...s.preview,note:lantern}}));}
+        break;
+      }
+    };
+    window.addEventListener('twi-hand-pick',pick);
+    return ()=>window.removeEventListener('twi-hand-pick',pick);
+  },[camera,gl,scene]);
+  const galleryView = useStore(s => s.zone === "gallery" || s.zone === "library");
   useEffect(() => {
     if (camera instanceof THREE.PerspectiveCamera) {
       const aspect = size.width / Math.max(1, size.height);
@@ -259,7 +281,7 @@ export default function CameraRig() {
     }
     const flightMode = useFlight.getState();
     const preview = flightMode.preview;
-    if (preview?.paused) return;
+    if (flightMode.pending && flightMode.previewChoice==='skip') return;
     if (flightMode.active || preview || takeoff.current) {
       if (moving.current) { moving.current = false; audio.stopFootsteps(); }
       if (st.nearby) st.set({nearby:null});

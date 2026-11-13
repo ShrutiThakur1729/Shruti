@@ -1,3 +1,4 @@
+export const LIBRARY_BOOKS: [number, number][] = [-8.5, -5.1, -1.7, 1.7, 5.1, 8.5].map(x => [x, -17.7]);
 export const GALLERY_EXHIBITS: [number, number][] = [[-8,-17.7],[-4,-18],[0,-18.5],[4,-18],[8,-17.7]];
 export const WING_ORIGIN = { gallery: [-39,6.25,-23], library: [39,6.25,-23] } as const;
 export type InteriorZone='hall'|'gallery'|'library';
@@ -20,7 +21,7 @@ export function interiorWalkable(x:number,z:number){
   const zone=interiorZone(x), origin=WING_ORIGIN[zone as 'gallery'|'library'];
   const lx=x-origin[0],lz=z-origin[2];
   if(zone==='gallery')for(const [px,pz] of GALLERY_EXHIBITS)if(Math.hypot(lx-px,lz-pz)<1.5)return false;
-  if(zone==='library')for(const [px,pz] of [[-8.2,-14],[-3.4,-14],[3.4,-14],[8.2,-14],[-5.8,2],[5.8,2]])if(Math.hypot(lx-px,lz-pz)<.8)return false;
+  if(zone==='library')for(const [px,pz] of LIBRARY_BOOKS)if(Math.hypot(lx-px,lz-pz)<1.15)return false;
   return true;
  }
  return false;
