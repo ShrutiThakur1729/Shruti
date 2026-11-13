@@ -16,7 +16,6 @@ import ControlsHelp from "./ui/ControlsHelp";
 import CastleGuide from './ui/CastleGuide';
 import {
   ExhibitPanel,
-  BookPanel,
   PoemsPanel,
   ReadingPanel,
   NotePanel,
@@ -26,9 +25,8 @@ import OpenDoor from "./ui/OpenDoor";
 import SoundtrackPlayer from './ui/SoundtrackPlayer';
 import GuestbookPanel from "./ui/GuestbookPanel";
 import GestureControl from "./ui/GestureControl";
-import { bookBus, BookExperience } from "./scenes/CastleWings";
+import BookPanel from './ui/LibraryBook';
 import { books,projects } from "./data/content";
-import type { GestureAction } from "./systems/gestureRecognizer";
 import { narrationScripts } from "./data/narration";
 
 class SceneError extends React.Component<
@@ -110,52 +108,9 @@ function Dialog({
   );
 }
 
-function BookOverlay() {
-  const refId = useStore((s) => s.refId);
-  const closePanel = useStore((s) => s.closePanel);
-  const book = books.find((b) => b.id === refId);
-  useEffect(()=>{
-    const key=(e:KeyboardEvent)=>{if(e.key==='ArrowRight')bookBus.next();if(e.key==='ArrowLeft')bookBus.prev();if(e.key==='Escape')closePanel();};
-    const gesture=(e:Event)=>{const a=(e as CustomEvent<GestureAction>).detail;if(a.type==='swipe'&&a.dx){a.dx<0?bookBus.next():bookBus.prev();}};
-    window.addEventListener('keydown',key);window.addEventListener('twi-gesture',gesture);
-    return()=>{window.removeEventListener('keydown',key);window.removeEventListener('twi-gesture',gesture);};
-  },[closePanel]);
-  if (!book) return null;
-  return (
-    <>
-      <div className="book-bar" data-testid="book-bar">
-        <span className="book-title">{book.title}</span>
-        <button data-testid="book3d-prev" onClick={() => bookBus.prev()} aria-label="Previous page">
-          ←
-        </button>
-        <button data-testid="book3d-next" onClick={() => bookBus.next()} aria-label="Next page">
-          →
-        </button>
-        <button
-          data-testid="book3d-close"
-          onClick={() => {
-            audio.playSfx("bookClose");
-            closePanel();
-          }}
-        >
-          Close Book
-        </button>
-        <button
-          data-testid="book3d-reader"
-          onClick={() => useStore.setState({ bookReader: true })}
-        >
-          Open in reader
-        </button>
-        <span className="book-hint">← → turn pages · Esc closes</span>
-      </div>
-    </>
-  );
-}
-
 function Panels() {
   const panel = useStore((s) => s.panel);
   const refId = useStore((s) => s.refId);
-  const bookReader = useStore(s=>s.bookReader);
   const zone=useStore(s=>s.zone);
   if (!panel) return null;
   let body: React.ReactNode = null;
@@ -165,7 +120,7 @@ function Panels() {
   else if (panel === "controls") body = <ControlsHelp />;
   else if (panel === "story") body = <MeetShruti />;
   else if (panel === "exhibit") body = <ExhibitPanel id={refId || ""} />;
-  else if (panel === "book" && bookReader) body = <BookPanel key={refId} id={refId || ""} />;
+  else if (panel === "book") body = <BookPanel key={refId} id={refId || ""} />;
   else if (panel === "poems") body = <PoemsPanel />;
   else if (panel === "reading") body = <ReadingPanel />;
   else if (panel === "soundtrack") body = <SoundtrackPlayer />;
@@ -189,8 +144,6 @@ export default function App() {
   const panel = useStore((s) => s.panel);
   const fading = useStore((s) => s.fading);
   const gestures = useStore((s) => s.gestures);
-  const bookReader = useStore(s=>s.bookReader);
-  const refId = useStore(s=>s.refId);
   const journey = useStore(s=>s.journey);
 
   useInteractKey();
@@ -281,7 +234,7 @@ export default function App() {
       {phase !== "opendoor" && (
         <SceneError>
           <Canvas
-            frameloop={phase==='landing'||(panel&&(panel!=='book'||bookReader))?'demand':'always'}
+            frameloop={phase==='landing'||panel?'demand':'always'}
             shadows
             dpr={[1, 1.5]}
             camera={{ fov: 55, near: 0.1, far: 1200 }}
@@ -292,7 +245,6 @@ export default function App() {
               <Performance active={phase==='world'&&!panel} />
               {phase === "world" && <WorldRoot />}
               <CameraRig />
-              {panel === "book" && !bookReader && refId && <BookExperience key={refId} bookId={refId} />}
             </Suspense>
           </Canvas>
         </SceneError>
@@ -304,14 +256,13 @@ export default function App() {
       <div className={`fade-layer ${fading ? "on" : ""}`} aria-hidden />
 
       <IdleGuide />
+      {gestures && <GestureControl />}
       {phase === "landing" && <Landing />}
       {phase === "world" && (
         <>
           {panel !== "book" && <HUD />}
           {panel !== "book" && <NarrationBar />}
           <Panels />
-          {panel === 'book' && !bookReader && <BookOverlay />}
-          {gestures && <GestureControl />}
         </>
       )}
       {phase === "opendoor" && <OpenDoor />}
