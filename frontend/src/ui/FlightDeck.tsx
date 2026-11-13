@@ -7,15 +7,15 @@ export function LoadingStatus() {
   const preview = useFlight(s=>s.preview);
   const active = useFlight(s=>s.active);
   const world = useStore(s=>s.world);
+  const pending=useFlight(s=>s.pending);
   const loaded = useProgress(s=>s.loaded), total = useProgress(s=>s.total);
-  if (!preview) return null;
+  if (!preview) return pending ? <aside className="preview-info" role="status">Loading {getWorld(world).name}…</aside> : null;
   return <aside className="preview-info">
-    <strong>Preparing {getWorld(world).name}</strong>
-    <small role="status">{total > loaded ? `${loaded} of ${total} assets loaded` : 'Lighting the courtyard…'}</small>
-    {!preview.paused && <><p>{preview.note ?? 'Explore the courtyard or touch a lantern.'}</p>
-      {!active && <button onClick={()=>toggleFlight(true)}>Try flying</button>}
-      <button onClick={()=>useFlight.setState({active:false,lift:0,preview:{...preview,paused:true}})}>Skip preview</button>
-    </>}
+    <strong>{pending ? 'Preparing '+getWorld(world).name : 'Flight courtyard'}</strong>
+    {pending>0 && <small role="status">{total > loaded ? `${loaded} of ${total} assets loaded` : 'Preparing the world…'}</small>}
+    <p>{preview.note ?? 'Explore the courtyard or touch a lantern.'}</p>
+    {!active && <button onClick={()=>{useFlight.setState({previewChoice:'stay'});toggleFlight(true);}}>Try flying</button>}
+    <button onClick={()=>useFlight.setState({active:false,lift:0,previewChoice:'skip'})}>Skip preview</button>
   </aside>;
 }
 

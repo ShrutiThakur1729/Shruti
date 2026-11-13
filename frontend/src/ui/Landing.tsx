@@ -45,6 +45,7 @@ export default function Landing() {
           Enter the Universe <span aria-hidden>↗</span>
         </button>
         <nav className="landing-shortcuts" aria-label="Portfolio shortcuts">
+          <button onClick={()=>useStore.setState({gestures:true})}>Use hand gestures</button>
           <button onClick={() => { enter(false); useStore.getState().travelTo("castle"); }}>See my projects <span aria-hidden>↗</span></button>
           <button onClick={() => useStore.getState().set({ phase: "opendoor", panel: null })}>Contact &amp; résumé <span aria-hidden>↗</span></button>
         </nav>

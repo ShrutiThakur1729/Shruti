@@ -70,6 +70,12 @@ canvas { touch-action: none; }
 }
 .more-routes summary { text-align:center; }
 .performance-report { display:none; }
+.hand-pointer { position:fixed;pointer-events:none;z-index:180;width:18px;height:18px;transform:translate(-50%,-50%);border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 2px #304b3bd9,0 0 9px #fff9; }
+.hand-options { position:fixed;z-index:155;inset:50% auto auto 50%;transform:translate(-50%,-50%);display:grid;width:min(300px,90vw);max-height:68dvh;overflow:auto;gap:4px;padding:10px;background:#12291ff5;border:1px solid #b4955b; }
+.hand-options button,.hand-settings {min-height:44px;color:#fff0cb;background:#1c3527;border:1px solid #9d814e;font:inherit;cursor:pointer}
+main .gesture-widget {position:fixed;top:auto;left:10px;right:auto;bottom:max(8px,env(safe-area-inset-bottom));z-index:160;max-height:42dvh;max-width:min(230px,calc(100vw - 24px));overflow-y:auto}
+main .gesture-widget.compact {width:auto;padding:2px}.gesture-widget.compact > :not(.hand-settings):not(.gesture-toast){display:none}
+.od-wayfinding {display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:2px 12px}.od-wayfinding button {min-height:44px}
 .more-routes[open] > div { display:grid; gap:4px; margin-top:4px; }
 .quick-actions:has(.more-routes[open]) { max-height:calc(100dvh - var(--world-bar-height,100px) - 155px); overflow:auto; }
 .preview-info, .flight-deck {

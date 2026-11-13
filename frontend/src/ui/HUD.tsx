@@ -124,7 +124,7 @@ export function HUD() {
 
       {isTouch && !panel && !journey && <TouchControls />}
       {world==='garden' && exploring && <GardenGuide/>}
-      {!!preview && !panel && <LoadingStatus/>}
+      {!journey && !panel && <LoadingStatus/>}
       {flying && !journey && !panel && <FlightDeck/>}
     </>
   );

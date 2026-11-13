@@ -1,9 +1,6 @@
-import { useState, useEffect } from "react";
-import type { GestureAction } from '../systems/gestureRecognizer';
-import { projects, books, poems, poetryCredit, reading, soundtrack, gardenNotes } from "../data/content";
-import { audio } from "../audio/AudioEngine";
-import { bookBus } from "../scenes/CastleWings";
-import { useStore, isTouch } from "../state/store";
+import { useState } from "react";
+import { projects, poems, poetryCredit, reading, soundtrack, gardenNotes } from "../data/content";
+import { useStore } from "../state/store";
 
 /* ————— Exhibit detail ————— */
 export function ExhibitPanel({ id }: { id: string }) {
@@ -46,73 +43,6 @@ export function ExhibitPanel({ id }: { id: string }) {
   );
 }
 
-/* ————— 2D book reader (mobile + accessible fallback) ————— */
-export function BookPanel({ id }: { id: string }) {
-  const book = books.find((b) => b.id === id);
-  const [page, setPage] = useState(0);
-  useEffect(()=>{
-    const turn=(dir:number)=>{setPage(p=>Math.max(0,Math.min((book?.pages.length??1)-1,p+dir)));audio.playSfx('page');};
-    const key=(e:KeyboardEvent)=>{if(e.key==='ArrowRight')turn(1);if(e.key==='ArrowLeft')turn(-1);};
-    const gesture=(e:Event)=>{const a=(e as CustomEvent<GestureAction>).detail;if(a.type==='swipe'&&a.dx)turn(a.dx<0?1:-1);};
-    window.addEventListener('keydown',key);window.addEventListener('twi-gesture',gesture);
-    return()=>{window.removeEventListener('keydown',key);window.removeEventListener('twi-gesture',gesture);};
-  },[book]);
-  if (!book) return null;
-  const pages = book.pages;
-  return (
-    <article className="panel-body book-panel" data-testid="book-panel">
-      <span className="chapter-mark">{book.author}</span>
-      <h2>{book.title}</h2>
-      <div className="book-page" data-testid="book-page">
-        <h3>{pages[page].heading}</h3>
-        {pages[page].body.map((para, i) =>
-          Array.isArray(para) ? (
-            <ul key={i}>
-              {para.map((li, j) => (
-                <li key={j}>{li}</li>
-              ))}
-            </ul>
-          ) : (
-            <p key={i}>{para}</p>
-          )
-        )}
-      </div>
-      <div className="book-nav">
-        <button
-          data-testid="book-prev"
-          disabled={page === 0}
-          onClick={() => {
-            audio.playSfx("page");
-            setPage((v) => v - 1);
-          }}
-        >
-          ← Previous
-        </button>
-        <span className="page-count">
-          Page {page + 1} of {pages.length}
-        </span>
-        <button
-          data-testid="book-next"
-          disabled={page === pages.length - 1}
-          onClick={() => {
-            audio.playSfx("page");
-            setPage((v) => v + 1);
-          }}
-        >
-          Next →
-        </button>
-      </div>
-      <div className="panel-actions">
-        <button className="btn-secondary" onClick={() => useStore.setState({ bookReader: false })}>View 3D book</button>
-        <button className="btn-secondary" data-testid="book-close" onClick={() => useStore.getState().closePanel()}>
-          Close Book
-        </button>
-      </div>
-    </article>
-  );
-}
-
-/* ————— Poetry nook ————— */
 export function PoemsPanel() {
   const [idx, setIdx] = useState(0);
   return (
@@ -240,14 +170,3 @@ export function WelcomePanel() {
     </article>
   );
 }
-
-/* keyboard page turns for the book panel */
-export function useBookKeys(open: boolean, onKey: (dir: number) => void) {
-  useState(() => {
-    /* placeholder to keep hooks tidy */
-  });
-  void open;
-  void onKey;
-}
-
-export { bookBus };

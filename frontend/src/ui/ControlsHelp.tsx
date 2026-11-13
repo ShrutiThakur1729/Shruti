@@ -37,6 +37,7 @@ export default function ControlsHelp() {
         </p>
       )}
       {!zone && <button className="btn-secondary" onClick={() => { toggleFlight(!flying); useStore.getState().closePanel(); }}>{flying ? 'Return to walking' : 'Try flying'}</button>}
+      <button className="btn-secondary" onClick={()=>{toggleFlight(false);useFlight.setState({previewChoice:'stay'});useStore.getState().closePanel();}}>Visit the flight courtyard</button>
       {worldViews.length > 0 && <h3>Visit a viewpoint here</h3>}
       {worldViews.length > 0 && (
         <div className="view-controls" aria-label="Scenic viewpoints">

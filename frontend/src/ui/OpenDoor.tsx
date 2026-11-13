@@ -36,7 +36,7 @@ export default function OpenDoor() {
   };
   return (
     <section className="open-door od-immersive" data-testid="open-door">
-      <header className="od-header"><span className="od-brand">✧ <span>THE WORLD INSIDE<em>A little universe called Shruti</em></span></span><button onClick={() => set({ phase: "world", panel: null })}>Return to the universe ←</button></header>
+      <header className="od-header"><span className="od-brand">✧ <span>THE WORLD INSIDE<em>A little universe called Shruti</em></span></span><div className="od-wayfinding"><button onClick={()=>set({gestures:true})}>Hand controls</button><button onClick={() => set({ phase: "world", panel: null })}>Return to the universe ←</button></div></header>
       <div className="od-backdrop" aria-hidden="true"/><div className="od-composition">
 
         <article className="od-contact-panel">

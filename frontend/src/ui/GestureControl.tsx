@@ -24,7 +24,15 @@ export default function GestureControl() {
   const [status, setStatus] = useState<Status>("loading");
   const [frame, setFrame] = useState<GestureFrame | null>(null);
   const [toast, setToast] = useState("");
+  const [dropdown,setDropdown] = useState<HTMLSelectElement|null>(null);
+  const [details,showDetails] = useState(false);
   const toastTimer = useRef(0);
+  useEffect(()=>{
+    const open=(e:Event)=>setDropdown((e as CustomEvent<HTMLSelectElement>).detail);
+    window.addEventListener('twi-hand-select',open);
+    const changed=useStore.subscribe((s,old)=>{if(s.panel!==old.panel || s.phase!==old.phase || s.world!==old.world)setDropdown(null);});
+    return ()=>{window.removeEventListener('twi-hand-select',open);changed();};
+  },[]);
 
   useEffect(() => {
     let cancelled = false;
@@ -54,7 +62,16 @@ export default function GestureControl() {
 
   const calibrating = status === "on" && frame?.calibrating != null;
   return (
-    <aside className={`gesture-widget ${calibrating ? "calibrating" : ""}`} data-testid="gesture-widget" aria-live="polite">
+    <>
+    {status==='on' && frame?.hand && !calibrating && <i className="hand-pointer" aria-hidden style={{left:frame.x*100+'%',top:frame.y*100+'%'}}/>}
+    {dropdown?.isConnected && <div className="hand-options" role="group" aria-label={dropdown.labels?.[0]?.innerText || 'Choose an option'}>
+      {Array.from(dropdown.options).filter(o=>!o.disabled).map(o=><button key={o.value} onClick={()=>{
+        dropdown.value=o.value;dropdown.dispatchEvent(new Event('change',{bubbles:true}));setDropdown(null);
+      }}>{o.text}</button>)}
+      <button onClick={()=>setDropdown(null)}>Cancel</button>
+    </div>}
+    <aside className={`gesture-widget ${details || status!=='on' || calibrating ? 'expanded' : 'compact'}`} data-testid="gesture-widget">
+      <button className="hand-settings" aria-expanded={details} onClick={()=>showDetails(v=>!v)}>Hand controls</button>
       <div className="gesture-cam">
         <video ref={video} muted playsInline data-testid="gesture-video" />
         {frame?.hand && (
@@ -71,8 +88,9 @@ export default function GestureControl() {
         )}
       </div>
       <p className={`gesture-status ${status}`} data-testid="gesture-status">{statusLabel(status, frame)}</p>
-      <p className="gesture-help">Move your open hand gently to look. Swipe left briskly for the next world, right for the previous. Pinch to select; hold to walk. Atlas: drag/pinch to pan, two hands to zoom. Books: swipe to turn.</p>
+      <p className="gesture-help">Aim the white ring and pinch to select. Hold to walk or scroll a panel. Swipe to change worlds or turn a book page.</p>
       {toast && <span className="gesture-toast" data-testid="gesture-toast">{toast}</span>}
+      {status === 'error' && <button className="gesture-off" onClick={()=>{useStore.setState({gestures:false});window.setTimeout(()=>useStore.setState({gestures:true}),0);}}>Try camera again</button>}
       {status === "on" && (
         <button className="gesture-off" data-testid="gesture-recalibrate" onClick={() => controls.current?.recalibrate()}>
           Recalibrate
@@ -81,6 +99,6 @@ export default function GestureControl() {
       <button className="gesture-off" data-testid="gesture-off" onClick={() => useStore.setState({ gestures: false })}>
         Turn off gestures
       </button>
-    </aside>
+    </aside></>
   );
 }
