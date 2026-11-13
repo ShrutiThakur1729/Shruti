@@ -73,6 +73,25 @@ export function plaqueTexture(
   return tex;
 }
 
+export function libraryCover(title:string,author:string,leather:string) {
+  const key='cover|'+title;
+  if(cache.has(key))return cache.get(key)!;
+  const ctx=makeCanvas(420,530).getContext('2d')!;
+  ctx.fillStyle=leather;ctx.fillRect(0,0,420,530);
+  const shade=ctx.createLinearGradient(0,0,420,460);
+  shade.addColorStop(0,'#0005');shade.addColorStop(.35,'#ffffff14');shade.addColorStop(1,'#0005');
+  ctx.fillStyle=shade;ctx.fillRect(0,0,420,530);
+  ctx.strokeStyle='#c8a768';ctx.lineWidth=4;ctx.strokeRect(20,20,380,490);
+  ctx.lineWidth=1.5;ctx.strokeRect(29,29,362,472);
+  ctx.textAlign='center';ctx.fillStyle='#e8d091';ctx.font='46px Georgia, serif';ctx.fillText('✧',210,126);
+  ctx.fillStyle='#fff1d5';ctx.font='bold 46px Georgia, serif';
+  const lines=wrapText(ctx,title,346);
+  lines.forEach((line,i)=>ctx.fillText(line,210,250+(i-(lines.length-1)/2)*53));
+  ctx.fillStyle='#d7c295';ctx.font='italic 25px Georgia, serif';ctx.fillText(author,210,405);
+  const texture=new THREE.CanvasTexture(ctx.canvas);texture.colorSpace=THREE.SRGBColorSpace;texture.anisotropy=4;
+  cache.set(key,texture);return texture;
+}
+
 export function pageTexture(
   heading: string,
   paragraphs: string[],

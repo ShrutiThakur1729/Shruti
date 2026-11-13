@@ -322,6 +322,23 @@ export function DustMotes({
 
 export function Fireflies({ count = 60, center = [0, 2, 0] as [number, number, number], radius = 30 }) {
   const ref = useRef<T.Points>(null);
+  const glow = useMemo(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = 64;
+    const ctx = canvas.getContext('2d')!;
+    const halo = ctx.createRadialGradient(32,34,1,32,34,29);
+    halo.addColorStop(0,'#fff9b3'); halo.addColorStop(.16,'#d9ed68');
+    halo.addColorStop(.4,'rgba(182,213,63,.28)'); halo.addColorStop(1,'rgba(146,181,49,0)');
+    ctx.fillStyle=halo;ctx.fillRect(0,0,64,64);
+    ctx.fillStyle='rgba(251,246,195,.42)';
+    for(const side of [-1,1]) {
+      ctx.beginPath();ctx.ellipse(32+side*5,26,2,6,side*.7,0,Math.PI*2);ctx.fill();
+    }
+    ctx.fillStyle='#fffbcd';ctx.beginPath();ctx.ellipse(32,33,2.6,4,.2,0,Math.PI*2);ctx.fill();
+    const texture=new T.CanvasTexture(canvas);texture.colorSpace=T.SRGBColorSpace;return texture;
+  },[]);
+  useEffect(()=>()=>glow.dispose(),[glow]);
+  const brightness = useMemo(()=>new Float32Array(count*3),[count]);
   const seeds = useMemo(
     () =>
       Array.from({ length: count }, (_, i) => ({
@@ -339,20 +356,25 @@ export function Fireflies({ count = 60, center = [0, 2, 0] as [number, number, n
     const t = clock.elapsedTime;
     seeds.forEach((s, i) => {
       const wob = Math.sin(t * s.sp + s.ph);
+      const flash=.1+.9*Math.pow(.5+.5*Math.sin(t*(1.5+s.sp*3)+s.ph*2),5);
+      brightness.fill(flash,i*3,i*3+3);
       positions[i * 3] = center[0] + Math.cos(s.a + t * 0.05) * s.r + wob * 0.6;
       positions[i * 3 + 1] = center[1] + s.h + Math.sin(t * 0.4 + s.ph) * 0.5;
       positions[i * 3 + 2] = center[2] + Math.sin(s.a + t * 0.05) * s.r + Math.cos(t * 0.3 + s.ph) * 0.6;
     });
     ref.current!.geometry.attributes.position.needsUpdate = true;
+    ref.current.geometry.attributes.color.needsUpdate = true;
   });
   return (
-    <points ref={ref}>
+    <points ref={ref} frustumCulled={false}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+        <bufferAttribute attach="attributes-color" args={[brightness, 3]} />
       </bufferGeometry>
       <pointsMaterial
-        size={0.16}
-        color="#ffe89b"
+        size={0.36}
+        map={glow}
+        vertexColors
         transparent
         opacity={0.9}
         depthWrite={false}
