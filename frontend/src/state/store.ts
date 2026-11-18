@@ -191,6 +191,9 @@ export const useStore = create<WorldState>((set, get) => ({
     const s = get();
     audio.playSfx("select");
     switch (it.kind) {
+      case "travel":
+        s.travelTo(it.refId as WorldId);
+        break;
       case "story":
         s.openPanel("story");
         break;
