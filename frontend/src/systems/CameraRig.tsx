@@ -120,9 +120,16 @@ export default function CameraRig() {
   }, [camera]);
 
   // journey start
+  useEffect(()=>{
+    const skip=()=>{if(travel.current)travel.current.time=travel.current.duration;};
+    window.addEventListener('twi-skip-journey',skip);
+    return ()=>window.removeEventListener('twi-skip-journey',skip);
+  },[]);
   useEffect(() => {
     if (!journey) return;
     resetFlight();
+    // Interior rooms use their own coordinates. Leave from the Castle grounds.
+    if(useStore.getState().world==='castle' && camera.position.x<60)camera.position.fromArray(getWorld('castle').arrival);
     const dest = getWorld(journey.to);
     const v = journey.view;
     const target = !v
@@ -133,7 +140,7 @@ export default function CameraRig() {
     travel.current = {
       start: camera.position.toArray() as Point,
       time: 0,
-      duration: flightDuration(camera.position.toArray() as Point, target.position),
+      duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? .01 : flightDuration(camera.position.toArray() as Point, target.position),
       end: target.position,
       lookAt: target.lookAt,
     };
