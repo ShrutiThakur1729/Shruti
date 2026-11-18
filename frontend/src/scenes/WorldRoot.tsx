@@ -2,6 +2,8 @@ import { Suspense,lazy,useEffect } from "react";
 import LoadingCourt, { LoadingSignal } from './LoadingCourt';
 import { useFlight } from '../systems/freeFlight';
 import FirstHello from "./FirstHello";
+import WorldGates from './WorldGates';
+import JourneyLandscape from './JourneyLandscape';
 const CastleWorld=lazy(()=>import("./CastleWorld"));
 const CastleInterior=lazy(()=>import("./CastleInterior"));
 const GardenWorld=lazy(()=>import("./GardenWorld"));
@@ -23,11 +25,13 @@ export default function WorldRoot() {
   const far = world === 'castle' ? (zone ? 120 : 420) : world === 'garden' ? 200 : 450;
   return <>
     <color attach="background" args={[atmosphere]}/>
-    {!courtyard && <fog attach="fog" args={[atmosphere,near,far]}/>}
-    <Suspense key={world} fallback={<LoadingSignal/>}><group visible={!courtyard}>
+    {!courtyard && <fog attach="fog" args={[journey?'#c7ccc1':atmosphere,journey?180:near,journey?700:far]}/>}
+    {journey && <JourneyLandscape/>}
+    <Suspense key={world} fallback={<LoadingSignal/>}><group visible={!courtyard && !journey}>
       {world === "hello" && <FirstHello />}
       {world === "castle" && (zone ? <CastleInterior zone={zone} /> : <CastleWorld />)}
       {world === "garden" && <GardenWorld />}
+      {!zone && <WorldGates world={world}/>}
     </group></Suspense>
     {courtyard && <LoadingCourt key={'courtyard-'+world}/>}
   </>;

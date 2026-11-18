@@ -18,6 +18,7 @@ import {
 import { plaqueTexture } from "./shared/textures";
 import { useStore } from "../state/store";
 import { gardenNotes } from "../data/content";
+import GardenPond from './GardenPond';
 import GuestbookNotes from "./GuestbookNotes";
 import { GrassField, Bushes, treeRing, type Bush } from "./shared/Nature";
 
@@ -86,7 +87,7 @@ function GardenTerrain() {
       heightFn={gardenGround}
       segments={110}
       colorFn={(x, z) => {
-        const l = 0.62 + noise(x * 0.09, z * 0.09) * 0.16;
+        const l = 0.42 + noise(x * 0.09, z * 0.09) * 0.14;
         const c = new T.Color().setHSL(0.25, 0.42, l);
         return `#${c.getHexString()}`;
       }}
@@ -168,127 +169,6 @@ function OldTree() {
       <Bushes items={canopies} seed={8} hue={0.25} lightness={0.17} />
     </group>
   );
-}
-
-function Pond() {
-  const { pond } = GARDEN;
-  const lilies = useMemo(() => {
-    const r = random(21);
-    return Array.from({ length: 14 }, () => {
-      const a = r() * Math.PI * 2,
-        d = 2 + r() * (pond.r - 3.4);
-      return { x: pond.x + Math.cos(a) * d, z: pond.z + Math.sin(a) * d, s: 0.5 + r() * 0.7, lotus: r() > 0.6 };
-    });
-  }, [pond]);
-  const reeds = useMemo(() => {
-    const r = random(66);
-    return Array.from({ length: 90 }, () => {
-      const a = r() * Math.PI * 2,
-        d = pond.r - 0.5 - r() * 2;
-      return { x: pond.x + Math.cos(a) * d, z: pond.z + Math.sin(a) * d, s: 0.5 + r() * 0.9, r: r() * 6.28 };
-    });
-  }, [pond]);
-  return (
-    <group>
-      <SimpleWater
-        width={pond.r * 2}
-        depth={pond.r * 2}
-        position={[pond.x, pond.water, pond.z]}
-        circle
-        color="#3d5c56"
-      />
-      {lilies.map((l, i) => (
-        <group key={i} position={[l.x, pond.water + 0.04, l.z]} scale={l.s}>
-          <mesh rotation={[-Math.PI / 2, 0, r2(i)]}>
-            <cylinderGeometry args={[0.42, 0.42, 0.04, 10]} />
-            <meshStandardMaterial color="#4a6e3a" roughness={0.8} />
-          </mesh>
-          {l.lotus && (
-            <mesh position={[0, 0.14, 0]}>
-              <sphereGeometry args={[0.14, 8, 8]} />
-              <meshStandardMaterial color="#d8a0b0" roughness={0.6} emissive="#a86878" emissiveIntensity={0.25} />
-            </mesh>
-          )}
-        </group>
-      ))}
-      <Reeds items={reeds} />
-      <Waterfall />
-      <PondBridge />
-    </group>
-  );
-}
-
-const r2 = (i: number) => (i * 2.399) % Math.PI;
-
-function Reeds({ items }: { items: { x: number; z: number; s: number; r: number }[] }) {
-  const ref = useRef<T.InstancedMesh>(null);
-  const geometry = useMemo(() => {
-    const g = new T.PlaneGeometry(0.09, 1.5, 1, 3);
-    g.translate(0, 0.75, 0);
-    return g;
-  }, []);
-  useLayoutEffect(() => {
-    const o = new T.Object3D();
-    items.forEach((it, i) => {
-      o.position.set(it.x, GARDEN.pond.water - 0.3, it.z);
-      o.rotation.set(0, it.r, (Math.random() - 0.5) * 0.2);
-      o.scale.setScalar(it.s);
-      o.updateMatrix();
-      ref.current!.setMatrixAt(i, o.matrix);
-      ref.current!.setColorAt(i, new T.Color().setHSL(0.22, 0.4, 0.28 + (i % 5) * 0.05));
-    });
-    ref.current!.instanceMatrix.needsUpdate = true;
-  }, [items]);
-  return (
-    <instancedMesh ref={ref} args={[geometry, undefined, items.length]}>
-      <meshStandardMaterial side={T.DoubleSide} roughness={1} />
-    </instancedMesh>
-  );
-}
-
-function Waterfall() {
-  const ref = useRef<T.Mesh>(null);
-  useFrame(({ clock }) => {
-    if (ref.current)
-      (ref.current.material as T.MeshStandardMaterial).opacity =
-        0.5 + Math.sin(clock.elapsedTime * 3.2) * 0.08;
-  });
-  const w = GARDEN.waterfall;
-  return (
-    <group position={[w.x, gardenGround(w.x, w.z), w.z]}>
-      <InstancedModel
-        url="/assets/rocks.glb"
-        height={2.6}
-        placements={[0, 1, 2].map((i) => ({ x: i * 1.2 - 1.2, y: -0.2 + i * 0.4, z: -i * 0.6, s: 1.3 - i * 0.2, r: i * 2.1 }))}
-      />
-      <mesh ref={ref} position={[0, 1.4, 0.8]}>
-        <planeGeometry args={[1.6, 3.4, 6, 14]} />
-        <meshStandardMaterial color="#d7e8db" transparent opacity={0.6} roughness={0.3} side={T.DoubleSide} />
-      </mesh>
-    </group>
-  );
-}
-
-function PondBridge() {
-  const wood = useSurface("bark_brown_02", 2);
-  const planks = useMemo(() => {
-    const list: { p: T.Vector3; s: T.Vector3; r: number }[] = [];
-    let i = 0;
-    for (let x = -165.6; x <= -157.4; x += 0.62) {
-      const t = (x + 165.6) / 8.2;
-      const y = 1.35 + Math.sin(t * Math.PI) * 0.42;
-      list.push({ p: new T.Vector3(x, y, -141), s: new T.Vector3(0.6, 0.14, 2.1), r: 0 });
-      if (i % 3 === 0) {
-        list.push({ p: new T.Vector3(x, y + 0.5, -142.1), s: new T.Vector3(0.12, 1, 0.12), r: 0 });
-        list.push({ p: new T.Vector3(x, y + 0.5, -139.9), s: new T.Vector3(0.12, 1, 0.12), r: 0 });
-      }
-      if (i % 3 === 1) list.push({ p: new T.Vector3(x, y + 1, -142.1), s: new T.Vector3(0.12, 0.12, 2.4), r: 0 });
-      if (i % 3 === 1) list.push({ p: new T.Vector3(x, y + 1, -139.9), s: new T.Vector3(0.12, 0.12, 2.4), r: 0 });
-      i++;
-    }
-    return list;
-  }, []);
-  return <Stones items={planks} material={wood} />;
 }
 
 function Gazebo() {
@@ -416,10 +296,10 @@ function useFrameOnce() {
 
 function RoseArches() {
   const arches: { x: number; z: number; ry: number }[] = [
-    { x: -170, z: -128, ry: 0 },
-    { x: -170, z: -136, ry: 0 },
-    { x: -172, z: -147, ry: Math.PI / 2 },
-    { x: -166, z: -147, ry: Math.PI / 2 },
+    { x: -174, z: -128, ry: 0 },
+    { x: -174, z: -136, ry: 0 },
+    { x: -172, z: -154, ry: Math.PI / 2 },
+    { x: -166, z: -154, ry: Math.PI / 2 },
   ];
   const flowers = useMemo(() => {
     const r = random(41);
@@ -550,7 +430,7 @@ function Nooks() {
           [-172, -124],
           [-166, -128],
           [-176, -157],
-          [-162, -150],
+          [-149, -151],
         ][i];
         const tex = plaqueTexture(gardenNotes[id].title, "Press E", "");
         return (
@@ -583,7 +463,7 @@ function GardenDressing() {
       const x = GARDEN.cx + Math.cos(a) * d,
         z = GARDEN.cz + Math.sin(a) * d;
       return { x, y: gardenGround(x, z), z, s: 0.04 + r() * 0.04, c: r() };
-    });
+    }).filter(f=>Math.hypot(f.x-GARDEN.pond.x,f.z-GARDEN.pond.z)>GARDEN.pond.r+1);
   }, []);
   const ref = useRef<T.InstancedMesh>(null);
   useLayoutEffect(() => {
@@ -604,7 +484,7 @@ function GardenDressing() {
     [-170, -122],
     [-167, -131],
     [-174, -139],
-    [-163, -145],
+    [-150, -145],
     [-176, -150],
   ];
   return (
@@ -656,16 +536,18 @@ function GateArch() {
 
 export default function GardenWorld() {
   const quality = useStore((s) => s.quality);
+  const sunTarget=useMemo(()=>{const o=new T.Object3D();o.position.set(GARDEN.cx,0,GARDEN.cz);return o;},[]);
   return (
     <>
 
 
-      <Sky sunPosition={[70, 6, -60]} turbidity={6} rayleigh={2.8} mieCoefficient={0.014} mieDirectionalG={0.86} />
+      <Sky sunPosition={[-70, 18, -60]} turbidity={6} rayleigh={2.8} mieCoefficient={0.014} mieDirectionalG={0.86} />
       <hemisphereLight args={["#f0cfa4", "#34402a", 1.15]} />
-      <directionalLight
-        position={[50, 18, -30]}
-        intensity={3}
-        color="#ffbf7a"
+      <primitive object={sunTarget}/>
+      <directionalLight target={sunTarget}
+        position={[GARDEN.cx-35,32,GARDEN.cz-24]}
+        intensity={2.5}
+        color="#ffd3a0"
         castShadow={quality !== "low"}
         shadow-mapSize={[quality === "high" ? 2048 : 1024, quality === "high" ? 2048 : 1024]}
         shadow-camera-left={-55}
@@ -678,7 +560,7 @@ export default function GardenWorld() {
       <GardenTerrain />
       <HedgeWall />
       <OldTree />
-      <Pond />
+      <GardenPond />
       <Gazebo />
       <Conservatory />
       <RoseArches />
@@ -694,7 +576,7 @@ export default function GardenWorld() {
 }
 
 function GardenMarkers(){
- const places=interactions.filter(i=>i.world==='garden'&&i.kind!=='guestbook');
+ const places=interactions.filter(i=>i.world==='garden'&&i.kind!=='guestbook'&&i.kind!=='travel');
  const textures=useMemo(()=>places.map(i=>plaqueTexture(i.label==='The Gramophone'?'Personal Soundtrack':i.label,'A little wonder','Tap to explore')),[]);
  return <group>{places.map((it,i)=><group key={it.id} userData={{discovery:it.id}} onClick={event => { event.stopPropagation(); useStore.getState().interactNow(it.id); }} position={[it.pos[0],gardenGround(...it.pos),it.pos[1]]}>
   <mesh position={[0,.65,0]}><cylinderGeometry args={[.055,.07,1.3,5]}/><meshStandardMaterial color="#6b4c2e"/></mesh>

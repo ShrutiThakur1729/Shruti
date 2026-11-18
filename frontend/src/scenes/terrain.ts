@@ -201,11 +201,15 @@ export const GARDEN = {
   waterfall: { x: -155, z: -134 },
 };
 
+export const POND_BRIDGE={x0:-173,x1:-151,z:-141,halfWidth:1.05};
+export const pondBridgeHeight=(x:number)=>1.7+Math.sin(THREE.MathUtils.clamp((x-POND_BRIDGE.x0)/(POND_BRIDGE.x1-POND_BRIDGE.x0),0,1)*Math.PI)*.9;
+export const onPondBridge=(x:number,z:number)=>x>=POND_BRIDGE.x0 && x<=POND_BRIDGE.x1 && Math.abs(z-POND_BRIDGE.z)<POND_BRIDGE.halfWidth;
+
 export function gardenGround(x: number, z: number) {
   const base = 0.6 + noise(x * 0.05, z * 0.05) * 1.1 + noise(x * 0.16, z * 0.16) * 0.3;
   const p = GARDEN.pond;
   const d = Math.hypot(x - p.x, z - p.z);
-  const pond = THREE.MathUtils.smoothstep(d, p.r * 0.35, p.r);
+  const pond = THREE.MathUtils.smoothstep(d, p.r * 0.78, p.r + .4);
   const gazD = Math.hypot(x - GARDEN.gazebo.x, z - GARDEN.gazebo.z);
   const mound = THREE.MathUtils.smoothstep(gazD, 8, 2) * 0.8;
   const h = THREE.MathUtils.lerp(p.water - 1.1, base, pond) + mound;
@@ -218,7 +222,7 @@ export function gardenCanStand(x: number, z: number) {
   if (Math.hypot(dx, dz) > GARDEN.radius - 1.6) return false;
   const p = GARDEN.pond;
   const dPond = Math.hypot(x - p.x, z - p.z);
-  const onBridge = x > -166 && x < -157 && z > -146 && z < -136;
+  const onBridge = onPondBridge(x,z);
   if (dPond < p.r - 1 && !onBridge) return false;
   if (Math.hypot(x - GARDEN.tree.x, z - GARDEN.tree.z) < GARDEN.tree.r) return false;
   if (Math.hypot(x - GARDEN.waterfall.x, z - GARDEN.waterfall.z) < 2.4) return false;
@@ -233,8 +237,8 @@ export function gardenCanStand(x: number, z: number) {
 
 export function gardenWalkHeight(x: number, z: number) {
   const p = GARDEN.pond;
-  const onBridge = x > -166 && x < -157 && z > -146 && z < -136;
-  if (onBridge) return 1.35;
+  const onBridge = onPondBridge(x,z);
+  if (onBridge) return pondBridgeHeight(x);
   const gazD = Math.hypot(x - GARDEN.gazebo.x, z - GARDEN.gazebo.z);
   if (gazD < 3.4) return gardenGround(GARDEN.gazebo.x, GARDEN.gazebo.z) + 0.3;
   return Math.max(gardenGround(x, z), p.water + 0.15);
