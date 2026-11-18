@@ -120,8 +120,8 @@ export const views: View[] = [
     world: "garden",
     zone: null,
     name: "The pond",
-    position: [-156, 3, -136],
-    lookAt: [-164, 1, -142],
+    position: [-162, 4, -128],
+    lookAt: [-162, 1, -143],
   },
   {
     id: "gazebo",

@@ -1,8 +1,11 @@
 import type { Point, WorldId } from "./worlds";
+import { worldRoutes } from './routes';
+import { getWorld } from './worlds';
 import type { Zone } from "../state/store";
 import { WING_ORIGIN, GALLERY_EXHIBITS, LIBRARY_BOOKS } from '../systems/castleLayout';
 
 export type InteractKind =
+  | "travel"
   | "story"
   | "atlas"
   | "gate"
@@ -31,6 +34,7 @@ export type Interaction = {
 };
 
 const localInteractions: Interaction[] = [
+  ...worldRoutes.map(r=>({id:r.id,world:r.world,zone:null,kind:'travel' as const,label:getWorld(r.to).name,hint:'Travel through the gateway',pos:r.pos,refId:r.to,radius:3.6})),
   // — The First Hello —
   {
     id: "hello-story",
@@ -233,7 +237,7 @@ const localInteractions: Interaction[] = [
     refId: "inspiration",
     label: "Inspiration",
     hint: "A small discovery",
-    pos: [-162, -150],
+    pos: [-149, -151],
     radius: 3.5,
   },
 ];
